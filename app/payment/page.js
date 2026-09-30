@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,7 +18,10 @@ import {
 // ==========================================
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export default function PaymentPage() {
+// ==========================================
+// ✅ MAIN CONTENT (uses useSearchParams)
+// ==========================================
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -160,12 +163,9 @@ export default function PaymentPage() {
           setPaymentStatus('failed');
         }
       } else if (paymentMethod === 'credit') {
-        // For now, simulate credit card payment
-        // TODO: Integrate with payment gateway
         setTransactionId(`CARD-${Date.now()}`);
         setPaymentStatus('success');
       } else if (paymentMethod === 'cod') {
-        // Cash on Delivery
         setTransactionId(null);
         setPaymentStatus('success');
       }
@@ -358,7 +358,7 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            {/* JazzCash Mobile Number Input (if JazzCash selected) */}
+            {/* JazzCash Mobile Number Input */}
             {paymentMethod === 'jazzcash' && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">JazzCash Mobile Number</h2>
@@ -379,7 +379,7 @@ export default function PaymentPage() {
               </div>
             )}
 
-            {/* Credit Card Input (if Credit selected) */}
+            {/* Credit Card Input */}
             {paymentMethod === 'credit' && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Card Details</h2>
@@ -490,7 +490,27 @@ export default function PaymentPage() {
   );
 }
 
+// ==========================================
+// ✅ DEFAULT EXPORT — wraps PaymentContent in Suspense
+// Required by Next.js 16 for useSearchParams()
+// ==========================================
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F8F9F6]">
+          <div className="w-12 h-12 border-4 border-[#2B7A4B] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
+  );
+}
+
+// ==========================================
 // Helper components for icons
+// ==========================================
 function ShoppingBagIcon({ className }) {
   return <ShoppingBag className={className} />;
 }

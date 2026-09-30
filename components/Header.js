@@ -226,7 +226,7 @@ export default function Header() {
               🌱 Spring Sale is Live! Up to 40% OFF <span className="underline cursor-pointer hover:opacity-80 font-bold"><Link href="/products">Shop Now</Link></span>
             </span>
             <span className="text-white/40 text-sm">|</span>
-            <span className="shrink-0">🚚 Free Shipping over $75</span>
+            <span className="shrink-0">🚚 Free Shipping over 1000Rs</span>
             <span className="text-white/40 text-sm">|</span>
             <span className="shrink-0">🌿 30-Day Plant Guarantee</span>
           </div>

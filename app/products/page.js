@@ -1101,10 +1101,11 @@
 
 // new version
 
+
 // app/products/page.js
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, memo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -1118,17 +1119,26 @@ import { addToCart } from '@/app/utils/cart';
 
 const API_BASE_URL = '';
 
+// ✅ Debounce hook to prevent slider lag
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
 // ==========================================
-// ✅ PRODUCT CARD COMPONENT (with discount)
+// ✅ PRODUCT CARD COMPONENT (memoized)
 // ==========================================
-function ProductCard({ product, viewMode }) {
+const ProductCard = memo(function ProductCard({ product, viewMode }) {
   const [discount, setDiscount] = useState(null);
   const [finalPrice, setFinalPrice] = useState(product.price);
   const [savings, setSavings] = useState(0);
   const [loadingDiscount, setLoadingDiscount] = useState(true);
   const [added, setAdded] = useState(false);
 
-  // Fetch discount
   useEffect(() => {
     const fetchDiscount = async () => {
       const productId = product._id || product.id;
@@ -1159,7 +1169,6 @@ function ProductCard({ product, viewMode }) {
     fetchDiscount();
   }, [product._id, product.id, product.price]);
 
-  // Add to cart
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1208,7 +1217,6 @@ function ProductCard({ product, viewMode }) {
           <Heart className="w-5 h-5" />
         </button>
 
-        {/* Image */}
         <div className="relative w-48 h-48 flex-shrink-0 bg-[#F8F9F6] rounded-lg overflow-hidden">
           {discount && (
             <div className="absolute top-2 left-2 z-10">
@@ -1227,7 +1235,6 @@ function ProductCard({ product, viewMode }) {
           />
         </div>
 
-        {/* Info */}
         <div className="flex-1 space-y-2">
           <h3 className="text-[15px] font-bold text-gray-900">{product.name}</h3>
           <p className="text-[13px] text-gray-500">{product.desc || product.description}</p>
@@ -1295,7 +1302,6 @@ function ProductCard({ product, viewMode }) {
       </button>
 
       <Link href={`/products/${product.slug || product._id}`} className="block">
-        {/* Image */}
         <div className="relative w-full aspect-square bg-[#F8F9F6] rounded-lg overflow-hidden mb-4">
           {discount && (
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -1328,7 +1334,6 @@ function ProductCard({ product, viewMode }) {
           )}
         </div>
 
-        {/* Info */}
         <div className="space-y-1.5">
           <h3 className="text-[15px] font-bold text-gray-900 truncate">{product.name}</h3>
           <p className="text-[13px] text-gray-500 line-clamp-1">{product.desc || product.description || ''}</p>
@@ -1341,7 +1346,6 @@ function ProductCard({ product, viewMode }) {
             <span>({product.numReviews || 0})</span>
           </div>
 
-          {/* Price */}
           <div className="pt-1.5">
             {loadingDiscount ? (
               <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
@@ -1373,7 +1377,6 @@ function ProductCard({ product, viewMode }) {
         </div>
       </Link>
 
-      {/* Add to Cart */}
       <div className="flex items-center justify-end pt-3">
         <button
           onClick={handleAddToCart}
@@ -1391,17 +1394,16 @@ function ProductCard({ product, viewMode }) {
       </div>
     </div>
   );
-}
+});
 
 // ==========================================
-// ✅ MAIN PRODUCTS CONTENT (uses useSearchParams)
+// ✅ MAIN PRODUCTS CONTENT
 // ==========================================
 function ProductsContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || '';
 
-  // ===== STATE =====
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
@@ -1410,6 +1412,9 @@ function ProductsContent() {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+
+  // ✅ Debounced price range — prevents lag while dragging slider
+  const debouncedPriceRange = useDebounce(priceRange, 300);
 
   // ===== FETCH CATEGORIES =====
   useEffect(() => {
@@ -1460,46 +1465,48 @@ function ProductsContent() {
     fetchProducts();
   }, [selectedCategory, searchQuery]);
 
-  // ===== FILTER & SORT =====
-  const filteredProducts = products
-    .filter((product) => {
-      const matchesSearch = product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.desc?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      return matchesSearch && matchesPrice;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
-      return 0;
-    });
+  // ✅ MEMOIZED FILTER & SORT — only recomputes when deps change
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        const matchesSearch = product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.desc?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesPrice =
+          product.price >= debouncedPriceRange[0] && product.price <= debouncedPriceRange[1];
+        return matchesSearch && matchesPrice;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-low') return a.price - b.price;
+        if (sortBy === 'price-high') return b.price - a.price;
+        if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+        return 0;
+      });
+  }, [products, searchQuery, debouncedPriceRange, sortBy]);
 
-  // ===== CATEGORIES LIST =====
-  const allCategories = ['All', ...categories.map(c => c.name)];
+  const allCategories = useMemo(
+    () => ['All', ...categories.map((c) => c.name)],
+    [categories]
+  );
 
-  // ===== GROUP BY CATEGORY =====
-  const getCategoryProducts = (categoryName) => {
-    if (categoryName === 'All' || categoryName === 'All Products') {
-      return filteredProducts;
-    }
-    return filteredProducts.filter(product =>
-      product.category === categoryName ||
-      product.category?.toLowerCase() === categoryName?.toLowerCase()
-    );
-  };
+  // ✅ MEMOIZED CATEGORY SECTIONS
+  const categorySections = useMemo(() => {
+    const getCategoryProducts = (categoryName) => {
+      if (categoryName === 'All' || categoryName === 'All Products') return filteredProducts;
+      return filteredProducts.filter(
+        (product) =>
+          product.category === categoryName ||
+          product.category?.toLowerCase() === categoryName?.toLowerCase()
+      );
+    };
 
-  const getCategorySections = () => {
     if (selectedCategory !== 'All' && selectedCategory !== 'All Products') {
       return [{ name: selectedCategory, products: getCategoryProducts(selectedCategory) }];
     }
-    const categoryNames = [...new Set(filteredProducts.map(p => p.category).filter(Boolean))];
+    const categoryNames = [...new Set(filteredProducts.map((p) => p.category).filter(Boolean))];
     return categoryNames
-      .map(cat => ({ name: cat, products: getCategoryProducts(cat) }))
-      .filter(section => section.products.length > 0);
-  };
-
-  const categorySections = getCategorySections();
+      .map((cat) => ({ name: cat, products: getCategoryProducts(cat) }))
+      .filter((section) => section.products.length > 0);
+  }, [filteredProducts, selectedCategory]);
 
   if (loading) {
     return (
@@ -1516,7 +1523,6 @@ function ProductsContent() {
     <div className="w-full min-h-screen bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
 
-        {/* BREADCRUMBS */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <span className="text-gray-400">🏠</span>
           <Link href="/" className="hover:text-[#2B7A4B]">Home</Link>
@@ -1528,7 +1534,6 @@ function ProductsContent() {
           </span>
         </div>
 
-        {/* HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -1577,7 +1582,6 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* MAIN LAYOUT */}
         <div className="flex flex-col lg:flex-row gap-8">
 
           {/* SIDEBAR */}
@@ -1754,7 +1758,6 @@ function ProductsContent() {
 
 // ==========================================
 // ✅ DEFAULT EXPORT — wraps ProductsContent in Suspense
-// Required by Next.js 16 for useSearchParams()
 // ==========================================
 export default function ProductsPage() {
   return (
@@ -1772,4 +1775,3 @@ export default function ProductsPage() {
     </Suspense>
   );
 }
-

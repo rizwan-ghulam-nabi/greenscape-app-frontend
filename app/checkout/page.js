@@ -76,7 +76,7 @@ export default function CheckoutPage() {
         }
 
         // Fetch user and addresses
-        const userRes = await fetch('http://localhost:5000/api/auth/me', {
+        const userRes = await fetch(`/api/auth/me`, {
           credentials: 'include',
         });
 
@@ -89,7 +89,7 @@ export default function CheckoutPage() {
         setUser(userData.user);
 
         // Fetch saved addresses
-        const addrRes = await fetch('http://localhost:5000/api/addresses', {
+        const addrRes = await fetch(`/api/addresses`, {
           credentials: 'include',
         });
 
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
         isDefault: newAddressForm.isDefault || false,
       };
 
-      const res = await fetch('http://localhost:5000/api/addresses', {
+      const res = await fetch(`/api/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
       if (res.ok) {
         const data = await res.json();
         // Refresh addresses list
-        const addrRes = await fetch('http://localhost:5000/api/addresses', {
+        const addrRes = await fetch(`/api/addresses`, {
           credentials: 'include',
         });
         if (addrRes.ok) {
@@ -317,7 +317,7 @@ export default function CheckoutPage() {
 
       console.log('Sending order data:', orderData);
 
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

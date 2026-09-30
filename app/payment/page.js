@@ -8,13 +8,13 @@ import Image from 'next/image';
 import { 
   CreditCard, Smartphone, Banknote, Lock, Shield, 
   CheckCircle, XCircle, Loader2, ArrowLeft, ChevronRight,
-  Wallet, AlertCircle, Package, Truck, MapPin
+  Wallet, AlertCircle, Package, Truck, MapPin, ShoppingBag
 } from 'lucide-react';
 
 // ==========================================
 // ✅ BACKEND API URL
 // ==========================================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -372,7 +372,7 @@ export default function PaymentPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  You'll receive a payment request on your JazzCash mobile number.
+                  You&apos;ll receive a payment request on your JazzCash mobile number.
                 </p>
               </div>
             )}

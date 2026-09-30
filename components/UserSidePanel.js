@@ -45,7 +45,7 @@ export default function UserSidePanel() {
   // Fetch Real User Data
   const fetchUser = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const res = await fetch(`/api/auth/me`, {
         credentials: 'include', 
       });
       if (res.ok) {
@@ -53,7 +53,7 @@ export default function UserSidePanel() {
         setUser(data.user);
         
         // Fetch order stats
-        const ordersRes = await fetch('http://localhost:5000/api/orders/my-orders', {
+        const ordersRes = await fetch(`/api/orders/my-orders`, {
           credentials: 'include',
         });
         
@@ -82,7 +82,7 @@ export default function UserSidePanel() {
         }
 
         // Fetch wishlist count
-        const wishlistRes = await fetch('http://localhost:5000/api/wishlist', {
+        const wishlistRes = await fetch(`/api/wishlist`, {
           credentials: 'include',
         });
         
@@ -104,7 +104,7 @@ export default function UserSidePanel() {
   // ===== NEW: FETCH CATEGORIES FROM API =====
   const fetchCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories');
+      const res = await fetch(`/api/categories');
       if (res.ok) {
         const data = await res.json();
         setCategories(data.categories || []);
@@ -137,7 +137,7 @@ export default function UserSidePanel() {
 
   // Logout Handler
   const handleLogout = async () => {
-    await fetch('http://localhost:5000/api/auth/logout', { 
+    await fetch(`/api/auth/logout`, { 
       method: 'POST', 
       credentials: 'include' 
     });

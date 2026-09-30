@@ -14,7 +14,7 @@ const N8N_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
 // ==========================================
 // ✅ BACKEND API URL
 // ==========================================
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 // ==========================================
 // ✅ FALLBACK PRODUCTS (If API fails)

@@ -32,7 +32,7 @@ export default function ProductDetailPage() {
         setLoading(true);
         
         // ✅ FIXED URL
-        const res = await fetch(`http://localhost:5000/api/public/products/slug/${slug}`);
+        const res = await fetch(`/api/public/products/slug/${slug}`);
         
         if (!res.ok) {
           throw new Error('Product not found');

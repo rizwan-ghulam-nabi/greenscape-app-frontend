@@ -42,7 +42,7 @@
 //   const fetchUser = async () => {
 //     console.log('📝 fetchUser called');
 //     try {
-//       const res = await fetch('http://localhost:5000/api/auth/me', {
+//       const res = await fetch(`/api/auth/me`, {
 //         credentials: 'include',
 //       });
 //       console.log('📥 fetchUser response status:', res.status);
@@ -176,7 +176,7 @@
 //       console.log('📤 Sending profile image to backend...');
 //       console.log('📸 Image URL:', imageUrl);
       
-//       const res = await fetch('http://localhost:5000/api/auth/update-profile', {
+//       const res = await fetch(`/api/auth/update-profile`, {
 //         method: 'PUT',
 //         headers: { 'Content-Type': 'application/json' },
 //         credentials: 'include',
@@ -234,7 +234,7 @@
 //   // ===== REMOVE PROFILE IMAGE =====
 //   const removeProfileImage = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/api/auth/update-profile', {
+//       const res = await fetch(`/api/auth/update-profile`, {
 //         method: 'PUT',
 //         headers: { 'Content-Type': 'application/json' },
 //         credentials: 'include',
@@ -272,7 +272,7 @@
 //     setIsSaving(true);
 
 //     try {
-//       const res = await fetch('http://localhost:5000/api/auth/update-profile', {
+//       const res = await fetch(`/api/auth/update-profile`, {
 //         method: 'PUT',
 //         headers: { 'Content-Type': 'application/json' },
 //         credentials: 'include',
@@ -698,7 +698,7 @@ import {
   ShoppingBag, Star
 } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ProfilePage() {
   const router = useRouter();

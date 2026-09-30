@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { generateInvoicePDF } from '@/app/utils/generateInvoice';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 export default function OrdersPage() {
   const router = useRouter();

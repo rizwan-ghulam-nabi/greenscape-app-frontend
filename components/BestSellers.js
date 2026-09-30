@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { addToCart } from '@/app/utils/cart';
 import { useState, useEffect } from 'react';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = '';
 
 export default function BestSellers() {
   const [products, setProducts] = useState([]);

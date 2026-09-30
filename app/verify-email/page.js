@@ -59,7 +59,7 @@ export default function VerifyEmailPage() {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/verification/send', {
+      const response = await fetch(`/api/verification/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function VerifyEmailPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/verification/verify', {
+      const response = await fetch(`/api/verification/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export default function VerifyEmailPage() {
     setIsResending(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/verification/resend', {
+      const response = await fetch(`/api/verification/resend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

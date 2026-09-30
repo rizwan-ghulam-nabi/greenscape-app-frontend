@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Use e-commerce backend URL (port 5000)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Get all published blog posts
 export const getPublishedPosts = async (page = 1, limit = 9) => {

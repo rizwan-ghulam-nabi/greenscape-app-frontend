@@ -25,7 +25,7 @@ export default function Footer() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
           withCredentials: true
         });
         
@@ -63,7 +63,7 @@ export default function Footer() {
   // Handle logout
   const handleLogout = async () => {
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/logout`, {}, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {}, {
         withCredentials: true
       });
 

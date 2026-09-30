@@ -7,7 +7,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ==========================================
 // ✅ BUTTON POSITION CLASSES

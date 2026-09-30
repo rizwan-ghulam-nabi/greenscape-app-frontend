@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 export default function Header() {
   const router = useRouter();

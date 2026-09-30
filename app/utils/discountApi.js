@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // ✅ Force /api prefix (since env doesn't include it)
-const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const BASE = process.env.NEXT_PUBLIC_API_URL;
 const API_BASE_URL = BASE.endsWith('/api') ? BASE : `${BASE}/api`;
 
 console.log('🌐 discountApi.js - API_BASE_URL:', API_BASE_URL);

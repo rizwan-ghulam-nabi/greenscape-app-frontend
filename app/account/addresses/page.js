@@ -58,7 +58,7 @@ export default function AddressesPage() {
   // ===== FETCH REAL USER & ADDRESSES =====
   const fetchData = async () => {
     try {
-      const userRes = await fetch('http://localhost:5000/api/auth/me', {
+      const userRes = await fetch(`/api/auth/me`, {
         credentials: 'include',
       });
 
@@ -70,7 +70,7 @@ export default function AddressesPage() {
       const userData = await userRes.json();
       setUser(userData.user);
 
-      const addrRes = await fetch('http://localhost:5000/api/addresses', {
+      const addrRes = await fetch(`/api/addresses`, {
         credentials: 'include',
       });
       
@@ -143,8 +143,8 @@ export default function AddressesPage() {
 
     try {
       const url = editingAddress 
-        ? `http://localhost:5000/api/addresses/${editingAddress._id}` 
-        : 'http://localhost:5000/api/addresses';
+        ? `/api/addresses/${editingAddress._id}` 
+        : `/api/addresses';
       
       const method = editingAddress ? 'PUT' : 'POST';
 
@@ -197,7 +197,7 @@ export default function AddressesPage() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/addresses/${addressToDelete}`, {
+      const res = await fetch(`/api/addresses/${addressToDelete}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -218,7 +218,7 @@ export default function AddressesPage() {
   // ===== SET DEFAULT ADDRESS =====
   const handleSetDefault = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/addresses/${id}/default`, {
+      const res = await fetch(`/api/addresses/${id}/default`, {
         method: 'PUT',
         credentials: 'include',
       });

@@ -11,7 +11,7 @@
 // } from 'lucide-react';
 // import Image from 'next/image';
 
-// const API_BASE_URL = 'http://localhost:5000';
+// const API_BASE_URL = '';
 
 // export default function ProductsPage() {
 //   const searchParams = useSearchParams();
@@ -455,7 +455,7 @@ import Image from 'next/image';
 import { getProductDiscount } from '@/app/utils/discountApi';
 import { addToCart } from '@/app/utils/cart';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = '';
 
 // ==========================================
 // ✅ PRODUCT CARD COMPONENT (with discount)

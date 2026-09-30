@@ -117,7 +117,7 @@ export default function SignUpPage() {
 
     try {
       // 2. Send data to the backend (Port 5000, /api/auth/register)
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export default function SignUpPage() {
       }
 
       // 4. Registration successful - Send verification code
-      const verifyRes = await fetch('http://localhost:5000/api/verification/send', {
+      const verifyRes = await fetch(`/api/verification/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/verification/verify', {
+      const response = await fetch(`/api/verification/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ export default function SignUpPage() {
     setIsResending(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/verification/resend', {
+      const response = await fetch(`/api/verification/resend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,3 +1,311 @@
+// // components/Banner.js
+// 'use client';
+
+// import { useState, useEffect, useCallback } from 'react';
+// import Link from 'next/link';
+// import Image from 'next/image';
+// import axios from 'axios';
+// import { ChevronRight, ChevronLeft } from 'lucide-react';
+
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// // ==========================================
+// // ✅ BUTTON POSITION CLASSES
+// // ==========================================
+// const BUTTON_POSITION_CLASSES = {
+//   'Bottom Left':   'bottom-6 md:bottom-8 left-6 md:left-8',
+//   'Bottom Center': 'bottom-6 md:bottom-8 left-1/2 -translate-x-1/2',
+//   'Bottom Right':  'bottom-6 md:bottom-8 right-6 md:right-8',
+//   'Center':        'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+//   'Center Left':   'top-1/2 left-6 md:left-8 -translate-y-1/2',
+//   'Center Right':  'top-1/2 right-6 md:right-8 -translate-y-1/2',
+//   'Top Left':      'top-6 md:top-8 left-6 md:left-8',
+//   'Top Right':     'top-6 md:top-8 right-6 md:right-8',
+// };
+
+// const BUTTON_SIZE_CLASSES = {
+//   Small:  'px-4 py-2 text-xs md:text-sm',
+//   Medium: 'px-6 py-3 text-sm md:text-base',
+//   Large:  'px-8 py-4 text-base md:text-lg',
+// };
+
+// const BUTTON_RADIUS_CLASSES = {
+//   none: 'rounded-none',
+//   sm:   'rounded-sm',
+//   md:   'rounded-lg',
+//   lg:   'rounded-xl',
+//   full: 'rounded-full',
+// };
+
+// export default function Banner() {
+//   const [banners, setBanners] = useState([]);
+//   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [isTransitioning, setIsTransitioning] = useState(false);
+
+//   // ==========================================
+//   // FETCH BANNERS
+//   // ==========================================
+//   useEffect(() => {
+//     const fetchBanners = async () => {
+//       try {
+//         const res = await axios.get(`${API_BASE_URL}/api/banners/active`, {
+//           withCredentials: true,
+//         });
+
+//         const bannerData = Array.isArray(res.data)
+//           ? res.data
+//           : res.data.banners || res.data.data || [];
+
+//         const activeBanners = bannerData.filter(
+//           (b) => b.image && b.isActive !== false
+//         );
+//         activeBanners.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+//         console.log('✅ Banners loaded:', activeBanners);
+//         setBanners(activeBanners);
+//       } catch (err) {
+//         console.error('❌ Error fetching banners:', err);
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchBanners();
+//   }, []);
+
+//   // Auto-rotate
+//   useEffect(() => {
+//     if (banners.length <= 1) return;
+//     const interval = setInterval(() => {
+//       setIsTransitioning(true);
+//       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+//       setTimeout(() => setIsTransitioning(false), 500);
+//     }, 5000);
+//     return () => clearInterval(interval);
+//   }, [banners.length]);
+
+//   const nextBanner = useCallback(() => {
+//     if (banners.length === 0) return;
+//     setIsTransitioning(true);
+//     setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+//     setTimeout(() => setIsTransitioning(false), 500);
+//   }, [banners.length]);
+
+//   const prevBanner = useCallback(() => {
+//     if (banners.length === 0) return;
+//     setIsTransitioning(true);
+//     setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+//     setTimeout(() => setIsTransitioning(false), 500);
+//   }, [banners.length]);
+
+//   const goToBanner = (index) => {
+//     setIsTransitioning(true);
+//     setCurrentBannerIndex(index);
+//     setTimeout(() => setIsTransitioning(false), 500);
+//   };
+
+//   // ==========================================
+//   // LINK BUILDER
+//   // ==========================================
+//   const getBannerLink = (banner) => {
+//     switch (banner.linkType) {
+//       case 'Category': {
+//         const categoryName = banner.categoryId?.name;
+//         if (categoryName) {
+//           return `/products?category=${encodeURIComponent(categoryName)}`;
+//         }
+//         return '/products';
+//       }
+//       case 'Product': {
+//         const productSlug = banner.productId?.slug;
+//         const productId = banner.productId?._id || banner.productId;
+//         if (productSlug) return `/products/${productSlug}`;
+//         if (productId) return `/products/${productId}`;
+//         return '/products';
+//       }
+//       case 'Custom URL':
+//         return banner.customUrl || '/products';
+//       default:
+//         return '/products';
+//     }
+//   };
+
+//   // ==========================================
+//   // LOADING
+//   // ==========================================
+//   if (loading) {
+//     return (
+//       <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
+//         <div className="w-full h-[200px] md:h-[300px] lg:h-[400px] bg-gray-100 animate-pulse rounded-2xl" />
+//       </div>
+//     );
+//   }
+
+//   if (error || banners.length === 0) {
+//     return null;
+//   }
+
+//   const currentBanner = banners[currentBannerIndex];
+//   const bannerLink = getBannerLink(currentBanner);
+
+//   // ==========================================
+//   // ✅ BUTTON CONFIG
+//   // ==========================================
+//   const btn = currentBanner.button || {};
+//   const buttonText = btn.text || 'Shop Now';
+//   const buttonPosition = btn.position || 'Center';
+//   const buttonSize = btn.size || 'Medium';
+//   const buttonStyle = btn.style || 'Solid';
+//   const buttonBg = btn.bgColor || '#0f5a2e';
+//   const buttonTextColor = btn.textColor || '#ffffff';
+//   const buttonHoverBg = btn.hoverBgColor || '#0a4221';
+//   const buttonRadius = btn.borderRadius || 'md';
+//   const showArrow = btn.showArrow !== false;
+
+//   const positionClass =
+//     BUTTON_POSITION_CLASSES[buttonPosition] || BUTTON_POSITION_CLASSES['Center'];
+//   const sizeClass = BUTTON_SIZE_CLASSES[buttonSize] || BUTTON_SIZE_CLASSES['Medium'];
+//   const radiusClass = BUTTON_RADIUS_CLASSES[buttonRadius] || BUTTON_RADIUS_CLASSES['md'];
+
+//   // Style variants
+//   const getButtonStyleObj = () => {
+//     if (buttonStyle === 'Solid') {
+//       return {
+//         backgroundColor: buttonBg,
+//         color: buttonTextColor,
+//         border: 'none',
+//       };
+//     }
+//     if (buttonStyle === 'Outline') {
+//       return {
+//         backgroundColor: 'transparent',
+//         color: buttonTextColor,
+//         border: `2px solid ${buttonTextColor}`,
+//       };
+//     }
+//     // Ghost
+//     return {
+//       backgroundColor: 'rgba(255,255,255,0.15)',
+//       color: buttonTextColor,
+//       border: 'none',
+//       backdropFilter: 'blur(8px)',
+//     };
+//   };
+
+//   // ==========================================
+//   // ✅ OVERLAY
+//   // ==========================================
+//   const getOverlayStyle = () => {
+//     if (currentBanner.overlayType === 'Dark') {
+//       const opacity = Math.max((currentBanner.overlayOpacity || 30) / 100, 0.25);
+//       return `rgba(0,0,0,${opacity})`;
+//     }
+//     if (currentBanner.overlayType === 'Light') {
+//       return `rgba(255,255,255,${(currentBanner.overlayOpacity || 20) / 100})`;
+//     }
+//     return 'transparent';
+//   };
+
+//   return (
+//     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
+//       <div className="relative w-full h-[200px] md:h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg group">
+        
+//         {/* Image */}
+//         <div
+//           className={`absolute inset-0 transition-opacity duration-500 ${
+//             isTransitioning ? 'opacity-0' : 'opacity-100'
+//           }`}
+//         >
+//           <Image
+//             src={currentBanner.image}
+//             alt={currentBanner.altText || currentBanner.title || 'Banner'}
+//             fill
+//             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
+//             className="object-cover object-center"
+//             priority={currentBannerIndex === 0}
+//             unoptimized
+//           />
+//         </div>
+
+//         {/* Overlay */}
+//         <div className="absolute inset-0" style={{ backgroundColor: getOverlayStyle() }} />
+
+//         {/* ==========================================
+//             ✅ BUTTON — Fully customized from admin config
+//         ========================================== */}
+//         <div className={`absolute ${positionClass} z-10`}>
+//           <Link
+//             href={bannerLink}
+//             className={`inline-flex items-center gap-2 font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl ${sizeClass} ${radiusClass}`}
+//             style={getButtonStyleObj()}
+//           >
+//             {buttonText}
+//             {showArrow && <ChevronRight className="w-4 h-4" />}
+//           </Link>
+//         </div>
+
+//         {/* Dots */}
+//         {banners.length > 1 && (
+//           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+//             {banners.map((_, index) => (
+//               <button
+//                 key={index}
+//                 onClick={() => goToBanner(index)}
+//                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+//                   index === currentBannerIndex
+//                     ? 'bg-white scale-125 shadow-md'
+//                     : 'bg-white/50 hover:bg-white/80'
+//                 }`}
+//                 aria-label={`Go to banner ${index + 1}`}
+//               />
+//             ))}
+//           </div>
+//         )}
+
+//         {/* Arrows */}
+//         {banners.length > 1 && (
+//           <>
+//             <button
+//               onClick={prevBanner}
+//               className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full backdrop-blur-sm transition-all hover:scale-110 z-10 opacity-0 group-hover:opacity-100"
+//               aria-label="Previous banner"
+//             >
+//               <ChevronLeft className="w-5 h-5" />
+//             </button>
+//             <button
+//               onClick={nextBanner}
+//               className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full backdrop-blur-sm transition-all hover:scale-110 z-10 opacity-0 group-hover:opacity-100"
+//               aria-label="Next banner"
+//             >
+//               <ChevronRight className="w-5 h-5" />
+//             </button>
+//           </>
+//         )}
+
+//         {/* Counter */}
+//         {banners.length > 1 && (
+//           <div className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full z-10">
+//             {currentBannerIndex + 1} / {banners.length}
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+//  new verison for custom 
 // components/Banner.js
 'use client';
 
@@ -10,31 +318,26 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ==========================================
-// ✅ BUTTON POSITION CLASSES
+// ✅ BUTTON SIZE PRESETS (used when size !== 'Custom')
 // ==========================================
-const BUTTON_POSITION_CLASSES = {
-  'Bottom Left':   'bottom-6 md:bottom-8 left-6 md:left-8',
-  'Bottom Center': 'bottom-6 md:bottom-8 left-1/2 -translate-x-1/2',
-  'Bottom Right':  'bottom-6 md:bottom-8 right-6 md:right-8',
-  'Center':        'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-  'Center Left':   'top-1/2 left-6 md:left-8 -translate-y-1/2',
-  'Center Right':  'top-1/2 right-6 md:right-8 -translate-y-1/2',
-  'Top Left':      'top-6 md:top-8 left-6 md:left-8',
-  'Top Right':     'top-6 md:top-8 right-6 md:right-8',
+const BUTTON_SIZE_PRESETS = {
+  Small:  { paddingX: 16, paddingY: 8,  fontSize: 13, minWidth: 100 },
+  Medium: { paddingX: 24, paddingY: 12, fontSize: 15, minWidth: 130 },
+  Large:  { paddingX: 32, paddingY: 16, fontSize: 17, minWidth: 170 },
 };
 
-const BUTTON_SIZE_CLASSES = {
-  Small:  'px-4 py-2 text-xs md:text-sm',
-  Medium: 'px-6 py-3 text-sm md:text-base',
-  Large:  'px-8 py-4 text-base md:text-lg',
+const BUTTON_RADIUS_VALUES = {
+  none: 0,
+  sm:   4,
+  md:   8,
+  lg:   12,
+  full: 9999,
 };
 
-const BUTTON_RADIUS_CLASSES = {
-  none: 'rounded-none',
-  sm:   'rounded-sm',
-  md:   'rounded-lg',
-  lg:   'rounded-xl',
-  full: 'rounded-full',
+const BADGE_RADIUS_VALUES = {
+  pill:    9999,
+  rounded: 8,
+  square:  0,
 };
 
 export default function Banner() {
@@ -155,56 +458,114 @@ export default function Banner() {
   // ✅ BUTTON CONFIG
   // ==========================================
   const btn = currentBanner.button || {};
-  const buttonText = btn.text || 'Shop Now';
-  const buttonPosition = btn.position || 'Center';
-  const buttonSize = btn.size || 'Medium';
-  const buttonStyle = btn.style || 'Solid';
-  const buttonBg = btn.bgColor || '#0f5a2e';
-  const buttonTextColor = btn.textColor || '#ffffff';
-  const buttonHoverBg = btn.hoverBgColor || '#0a4221';
-  const buttonRadius = btn.borderRadius || 'md';
-  const showArrow = btn.showArrow !== false;
 
-  const positionClass =
-    BUTTON_POSITION_CLASSES[buttonPosition] || BUTTON_POSITION_CLASSES['Center'];
-  const sizeClass = BUTTON_SIZE_CLASSES[buttonSize] || BUTTON_SIZE_CLASSES['Medium'];
-  const radiusClass = BUTTON_RADIUS_CLASSES[buttonRadius] || BUTTON_RADIUS_CLASSES['md'];
+  const buttonText      = btn.text || 'Shop Now';
+  const buttonSize      = btn.size || 'Medium';
+  const buttonStyle     = btn.style || 'Solid';
+  const buttonBg        = btn.bgColor || '#0f5a2e';
+  const buttonTextColor = btn.textColor || '#ffffff';
+  const buttonRadiusKey = btn.borderRadius || 'md';
+  const showArrow       = btn.showArrow !== false;
+
+  // ✅ Position — use x/y (%) with fallback to preset position
+  const hasXY = typeof btn.x === 'number' && typeof btn.y === 'number';
+  const buttonX = hasXY ? btn.x : 50;
+  const buttonY = hasXY ? btn.y : 50;
+
+  // ✅ Resolve size — Custom uses width/height, presets use padding/font
+  const resolvedSize = (() => {
+    if (buttonSize === 'Custom') {
+      return {
+        isCustom: true,
+        width:    btn.width  ?? 160,
+        height:   btn.height ?? 48,
+        fontSize: 15,          // fallback font size inside the fixed box
+        paddingX: 16,
+        paddingY: 10,
+        minWidth: 0,
+      };
+    }
+    const preset = BUTTON_SIZE_PRESETS[buttonSize] || BUTTON_SIZE_PRESETS.Medium;
+    return { isCustom: false, ...preset };
+  })();
+
+  const buttonRadiusPx = BUTTON_RADIUS_VALUES[buttonRadiusKey] ?? 8;
 
   // Style variants
   const getButtonStyleObj = () => {
+    const base = {
+      color: buttonTextColor,
+      borderRadius: `${buttonRadiusPx}px`,
+      transition: 'all 0.3s ease',
+    };
+
     if (buttonStyle === 'Solid') {
-      return {
-        backgroundColor: buttonBg,
-        color: buttonTextColor,
-        border: 'none',
-      };
+      return { ...base, backgroundColor: buttonBg, border: 'none' };
     }
     if (buttonStyle === 'Outline') {
       return {
+        ...base,
         backgroundColor: 'transparent',
-        color: buttonTextColor,
         border: `2px solid ${buttonTextColor}`,
       };
     }
     // Ghost
     return {
+      ...base,
       backgroundColor: 'rgba(255,255,255,0.15)',
-      color: buttonTextColor,
       border: 'none',
       backdropFilter: 'blur(8px)',
     };
   };
 
+  const buttonStyleObj = {
+    ...getButtonStyleObj(),
+    ...(resolvedSize.isCustom
+      ? {
+          width:    `${resolvedSize.width}px`,
+          height:   `${resolvedSize.height}px`,
+          fontSize: `${resolvedSize.fontSize}px`,
+        }
+      : {
+          padding:  `${resolvedSize.paddingY}px ${resolvedSize.paddingX}px`,
+          fontSize: `${resolvedSize.fontSize}px`,
+          minWidth: `${resolvedSize.minWidth}px`,
+        }),
+  };
+
   // ==========================================
-  // ✅ OVERLAY
+  // ✅ BADGE CONFIG
+  // ==========================================
+  const bdg = currentBanner.badge || {};
+  const badgeEnabled = bdg.enabled === true && !!bdg.text;
+  const badgeStyleObj = {
+    position: 'absolute',
+    left: `${bdg.x ?? 82}%`,
+    top: `${bdg.y ?? 22}%`,
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: bdg.bgColor || '#dc2626',
+    color: bdg.textColor || '#FFFFFF',
+    fontSize: `${bdg.fontSize ?? 14}px`,
+    padding: `${bdg.paddingY ?? 6}px ${bdg.paddingX ?? 14}px`,
+    borderRadius: `${BADGE_RADIUS_VALUES[bdg.shape] ?? 9999}px`,
+    fontWeight: 'bold',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+    zIndex: 15,
+    whiteSpace: 'nowrap',
+  };
+
+  // ==========================================
+  // ✅ OVERLAY — use exact opacity, no min clamp
   // ==========================================
   const getOverlayStyle = () => {
+    const rawOpacity = Number(currentBanner.overlayOpacity ?? 30);
+    const alpha = Math.max(0, Math.min(1, rawOpacity / 100));
+
     if (currentBanner.overlayType === 'Dark') {
-      const opacity = Math.max((currentBanner.overlayOpacity || 30) / 100, 0.25);
-      return `rgba(0,0,0,${opacity})`;
+      return `rgba(0,0,0,${alpha})`;
     }
     if (currentBanner.overlayType === 'Light') {
-      return `rgba(255,255,255,${(currentBanner.overlayOpacity || 20) / 100})`;
+      return `rgba(255,255,255,${alpha})`;
     }
     return 'transparent';
   };
@@ -212,7 +573,7 @@ export default function Banner() {
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
       <div className="relative w-full h-[200px] md:h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg group">
-        
+
         {/* Image */}
         <div
           className={`absolute inset-0 transition-opacity duration-500 ${
@@ -231,16 +592,32 @@ export default function Banner() {
         </div>
 
         {/* Overlay */}
-        <div className="absolute inset-0" style={{ backgroundColor: getOverlayStyle() }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: getOverlayStyle() }} />
 
         {/* ==========================================
-            ✅ BUTTON — Fully customized from admin config
+            ✅ BADGE — rendered if enabled
         ========================================== */}
-        <div className={`absolute ${positionClass} z-10`}>
+        {badgeEnabled && (
+          <div style={badgeStyleObj}>
+            {bdg.text}
+          </div>
+        )}
+
+        {/* ==========================================
+            ✅ BUTTON — positioned by x/y %, sized by preset or Custom
+        ========================================== */}
+        <div
+          className="absolute z-10"
+          style={{
+            left: `${buttonX}%`,
+            top: `${buttonY}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
           <Link
             href={bannerLink}
-            className={`inline-flex items-center gap-2 font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl ${sizeClass} ${radiusClass}`}
-            style={getButtonStyleObj()}
+            className="inline-flex items-center justify-center gap-2 font-semibold hover:scale-105 hover:shadow-xl"
+            style={buttonStyleObj}
           >
             {buttonText}
             {showArrow && <ChevronRight className="w-4 h-4" />}

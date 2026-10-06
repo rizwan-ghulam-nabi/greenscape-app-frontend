@@ -162,21 +162,7 @@ export default function Banner() {
   const buttonRadiusKey = btn.borderRadius || 'md';
   const showArrow       = btn.showArrow !== false;
 
-  // Position — use x/y (%) with fallback
-  const hasXY = typeof btn.x === 'number' && typeof btn.y === 'number';
-  const buttonX = hasXY ? btn.x : 50;
-  const buttonY = hasXY ? btn.y : 50;
-
-  // ✅ Smart transform — prevent button clipping at edges
-  const isRightEdge  = buttonX > 85;
-  const isLeftEdge   = buttonX < 15;
-  const isBottomEdge = buttonY > 85;
-  const isTopEdge    = buttonY < 15;
-
-  const buttonTransform = [
-    isRightEdge ? 'translateX(-100%)' : isLeftEdge ? 'translateX(0)' : 'translateX(-50%)',
-    isBottomEdge ? 'translateY(-100%)' : isTopEdge ? 'translateY(0)' : 'translateY(-50%)',
-  ].join(' ');
+  
 
   // ✅ Resolve size — Custom uses width/height scaled with viewport
   const resolvedSize = (() => {

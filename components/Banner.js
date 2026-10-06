@@ -592,8 +592,9 @@ export default function Banner() {
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4">
-      <div className="relative w-full h-[200px] md:h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg group">
+      {/* <div className="relative w-full h-[200px] md:h-[300px] lg:h-[400px] rounded-2xl overflow-hidden shadow-lg group"> */}
 
+<div className="relative w-full aspect-[2.5/1] max-h-[500px] rounded-2xl overflow-hidden shadow-lg group">
         <div className={`absolute inset-0 transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
           <Image
             src={currentBanner.image}

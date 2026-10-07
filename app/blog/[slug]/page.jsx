@@ -238,7 +238,7 @@ export default function BlogPostPage() {
           <div className="text-6xl mb-4">📚</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Post not found'}</h1>
           <p className="text-gray-600 mb-8">
-            The article you're looking for doesn't exist or has been removed.
+            The article &rsquo;you&rsquo;re looking for doesn&rsquo;t exist or has been removed.
           </p>
           <Link
             href="/blog"
@@ -438,7 +438,7 @@ export default function BlogPostPage() {
                   </div>
 
                   <p className="mt-3 px-2 text-[11px] text-gray-400 leading-relaxed">
-                    Tip: If Facebook/Twitter asks you to log in, that's normal — they require an account to share. Log in once and it stays logged in.
+                    Tip: If Facebook/Twitter asks you to log in, that&rsquo;s normal — they require an account to share. Log in once and it stays logged in.
                   </p>
                 </div>
               )}
@@ -611,3 +611,6 @@ export default function BlogPostPage() {
     </div>
   );
 }
+
+
+

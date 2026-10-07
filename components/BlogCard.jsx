@@ -1,10 +1,22 @@
 // components/BlogCard.jsx - COMPACT VERSION
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Eye, ArrowRight, Clock } from 'lucide-react';
 
 export default function BlogCard({ post, index = 0, viewMode = 'grid' }) {
+  const [isLiked, setIsLiked] = useState(() => {
+    if (typeof window === 'undefined' || !post?.slug) return false;
+
+    try {
+      const likedPosts = JSON.parse(localStorage.getItem('greenscape_liked_posts') || '[]');
+      return Array.isArray(likedPosts) && likedPosts.includes(post.slug);
+    } catch {
+      return false;
+    }
+  });
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -168,3 +180,6 @@ export default function BlogCard({ post, index = 0, viewMode = 'grid' }) {
     </article>
   );
 }
+
+
+

@@ -14,6 +14,30 @@ import { FacebookIcon, TwitterIcon, LinkedinIcon } from '@/components/SocialIcon
 import { getPostBySlug, getRelatedPosts, getPopularPosts } from '../../lib/blogApi';
 import BlogCard from '@/components/BlogCard';
 
+// ============================================================
+// LOCALSTORAGE HELPERS
+// ============================================================
+const LIKED_KEY = 'greenscape_liked_posts';
+const BOOKMARKED_KEY = 'greenscape_bookmarked_posts';
+
+function getStored(key) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(key);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function setStored(key, arr) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(arr));
+  } catch {}
+}
+
 export default function BlogPostPage() {
   const params = useParams();
   const slug = params?.slug;
@@ -36,7 +60,16 @@ export default function BlogPostPage() {
   const shareMenuRef = useRef(null);
 
   // ============================================================
-  // FETCH — combined, single effect, no lint warnings
+  // RESTORE LIKE / BOOKMARK FROM LOCALSTORAGE
+  // ============================================================
+  useEffect(() => {
+    if (!slug) return;
+    setLiked(getStored(LIKED_KEY).includes(slug));
+    setBookmarked(getStored(BOOKMARKED_KEY).includes(slug));
+  }, [slug]);
+
+  // ============================================================
+  // FETCH POST + POPULAR POSTS
   // ============================================================
   useEffect(() => {
     if (!slug) return;
@@ -57,7 +90,6 @@ export default function BlogPostPage() {
           if (typeof document !== 'undefined') {
             document.title = `${postRes.post.title} | GreenScape Blog`;
           }
-          // Fire-and-forget related posts (doesn't block)
           getRelatedPosts(postRes.post._id, 3).then((r) => {
             if (!cancelled && r?.posts) setRelatedPosts(r.posts);
           });
@@ -104,9 +136,7 @@ export default function BlogPostPage() {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
+      month: 'long', day: 'numeric', year: 'numeric',
     });
   };
 
@@ -114,6 +144,26 @@ export default function BlogPostPage() {
     if (!content) return '2 min read';
     const words = content.split(/\s+/).length;
     return `${Math.ceil(words / 200)} min read`;
+  };
+
+  const toggleLike = () => {
+    if (!slug) return;
+    const arr = getStored(LIKED_KEY);
+    const next = liked
+      ? arr.filter((s) => s !== slug)
+      : [...new Set([...arr, slug])];
+    setStored(LIKED_KEY, next);
+    setLiked(!liked);
+  };
+
+  const toggleBookmark = () => {
+    if (!slug) return;
+    const arr = getStored(BOOKMARKED_KEY);
+    const next = bookmarked
+      ? arr.filter((s) => s !== slug)
+      : [...new Set([...arr, slug])];
+    setStored(BOOKMARKED_KEY, next);
+    setBookmarked(!bookmarked);
   };
 
   const fallbackCopy = useCallback((text, cb) => {
@@ -133,7 +183,7 @@ export default function BlogPostPage() {
   }, []);
 
   // ============================================================
-  // SHARE — synchronous open, no popup blocking
+  // SHARE
   // ============================================================
   const handleShare = (platform) => {
     if (!post) return;
@@ -238,7 +288,7 @@ export default function BlogPostPage() {
           <div className="text-6xl mb-4">📚</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Post not found'}</h1>
           <p className="text-gray-600 mb-8">
-            The article &rsquo;you&rsquo;re looking for doesn&rsquo;t exist or has been removed.
+            The article you&rsquo;re looking for doesn&rsquo;t exist or has been removed.
           </p>
           <Link
             href="/blog"
@@ -254,9 +304,6 @@ export default function BlogPostPage() {
   const nativeShareAvailable =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  // ============================================================
-  // RENDER
-  // ============================================================
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-green-50/30">
 
@@ -317,7 +364,7 @@ export default function BlogPostPage() {
           {/* ACTIONS */}
           <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-100">
             <button
-              onClick={() => setLiked(!liked)}
+              onClick={toggleLike}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 ${
                 liked ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
               }`}
@@ -327,7 +374,7 @@ export default function BlogPostPage() {
             </button>
 
             <button
-              onClick={() => setBookmarked(!bookmarked)}
+              onClick={toggleBookmark}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 ${
                 bookmarked ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
               }`}
@@ -360,30 +407,21 @@ export default function BlogPostPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <button
-                      onClick={() => handleShare('facebook')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('facebook')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <FacebookIcon className="w-4 h-4" />
                       </span>
                       <span className="font-medium">Facebook</span>
                     </button>
 
-                    <button
-                      onClick={() => handleShare('twitter')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('twitter')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <TwitterIcon className="w-4 h-4" />
                       </span>
                       <span className="font-medium">Twitter / X</span>
                     </button>
 
-                    <button
-                      onClick={() => handleShare('whatsapp')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('whatsapp')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
                           <path d="M20.5 3.5A11.9 11.9 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.5 4.2 1.6 6L0 24l6.2-1.6A11.9 11.9 0 0012 24c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.5zM12 22a10 10 0 01-5.1-1.4l-.3-.2-3.7 1 1-3.6-.2-.4A10 10 0 012 12C2 6.5 6.5 2 12 2c2.7 0 5.2 1 7 2.9A9.9 9.9 0 0122 12c0 5.5-4.5 10-10 10zm5.5-7.5c-.3-.2-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.4.2-.6.1-.3-.2-1.3-.5-2.5-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.2.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.7-.9-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4z"/>
@@ -392,20 +430,14 @@ export default function BlogPostPage() {
                       <span className="font-medium">WhatsApp</span>
                     </button>
 
-                    <button
-                      onClick={() => handleShare('linkedin')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('linkedin')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-blue-700 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <LinkedinIcon className="w-4 h-4" />
                       </span>
                       <span className="font-medium">LinkedIn</span>
                     </button>
 
-                    <button
-                      onClick={() => handleShare('email')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('email')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <Mail className="w-4 h-4" />
                       </span>
@@ -415,10 +447,7 @@ export default function BlogPostPage() {
                     <div className="border-t border-gray-100 my-2" />
 
                     {nativeShareAvailable && (
-                      <button
-                        onClick={() => handleShare('native')}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group"
-                      >
+                      <button onClick={() => handleShare('native')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group">
                         <span className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200">
                           <Share2 className="w-4 h-4 text-gray-600" />
                         </span>
@@ -426,10 +455,7 @@ export default function BlogPostPage() {
                       </button>
                     )}
 
-                    <button
-                      onClick={() => handleShare('copy')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group"
-                    >
+                    <button onClick={() => handleShare('copy')} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group">
                       <span className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200">
                         {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4 text-gray-600" />}
                       </span>
@@ -611,6 +637,3 @@ export default function BlogPostPage() {
     </div>
   );
 }
-
-
-

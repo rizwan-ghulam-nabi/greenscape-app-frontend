@@ -1,15 +1,16 @@
+// // new version 7/10/2026
 // // app/blog/[slug]/page.jsx - COMPLETE FIXED
 // 'use client';
 
-// import { useState, useEffect } from 'react';
+// import { useState, useEffect, useRef } from 'react';
 // import { useParams, useRouter } from 'next/navigation';
 // import Link from 'next/link';
-// import { 
-//   ArrowLeft, Calendar, Clock, Eye, Share2, 
+// import {
+//   ArrowLeft, ArrowRight, Calendar, Clock, Eye, Share2,
 //   Heart, Bookmark, Tag, User, ChevronRight,
 //   Loader2, MessageCircle, Link2, Home,
 //   ExternalLink, Globe, Mail, Copy, Check,
-//   BookOpen
+//   BookOpen, X
 // } from 'lucide-react';
 // import { FacebookIcon, TwitterIcon, LinkedinIcon, InstagramIcon } from '@/components/SocialIcons';
 // import { getPostBySlug, getRelatedPosts, getPopularPosts } from '../../lib/blogApi';
@@ -18,7 +19,7 @@
 // export default function BlogPostPage() {
 //   const params = useParams();
 //   const router = useRouter();
-//   const slug = params.slug;
+//   const slug = params?.slug;
 
 //   const [post, setPost] = useState(null);
 //   const [relatedPosts, setRelatedPosts] = useState([]);
@@ -35,19 +36,24 @@
 //   const [commentEmail, setCommentEmail] = useState('');
 //   const [copied, setCopied] = useState(false);
 
-//   // Fetch post
+//   const shareMenuRef = useRef(null);
+
+//   // ============================================================
+//   // FETCH POST
+//   // ============================================================
 //   const fetchPost = async () => {
 //     try {
 //       setLoading(true);
 //       setError(null);
 
 //       const response = await getPostBySlug(slug);
-      
+
 //       if (response?.post) {
 //         setPost(response.post);
-//         document.title = `${response.post.title} | GreenScape Blog`;
-        
-//         // Fetch related posts
+//         if (typeof document !== 'undefined') {
+//           document.title = `${response.post.title} | GreenScape Blog`;
+//         }
+
 //         const relatedResponse = await getRelatedPosts(response.post._id, 3);
 //         if (relatedResponse?.posts) {
 //           setRelatedPosts(relatedResponse.posts);
@@ -63,7 +69,6 @@
 //     }
 //   };
 
-//   // Fetch popular posts
 //   const fetchPopularPosts = async () => {
 //     const response = await getPopularPosts(4);
 //     if (response?.posts) {
@@ -71,25 +76,47 @@
 //     }
 //   };
 
-//   // Load post on slug change
 //   useEffect(() => {
 //     if (slug) {
 //       fetchPost();
 //       fetchPopularPosts();
 //     }
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [slug]);
 
-//   // Format date
+//   // ============================================================
+//   // CLOSE SHARE MENU ON OUTSIDE CLICK
+//   // ============================================================
+//   useEffect(() => {
+//     if (!showShareMenu) return;
+//     const onClick = (e) => {
+//       if (shareMenuRef.current && !shareMenuRef.current.contains(e.target)) {
+//         setShowShareMenu(false);
+//       }
+//     };
+//     const onEsc = (e) => {
+//       if (e.key === 'Escape') setShowShareMenu(false);
+//     };
+//     document.addEventListener('mousedown', onClick);
+//     document.addEventListener('keydown', onEsc);
+//     return () => {
+//       document.removeEventListener('mousedown', onClick);
+//       document.removeEventListener('keydown', onEsc);
+//     };
+//   }, [showShareMenu]);
+
+//   // ============================================================
+//   // HELPERS
+//   // ============================================================
 //   const formatDate = (dateString) => {
 //     if (!dateString) return '';
 //     return new Date(dateString).toLocaleDateString('en-US', {
 //       month: 'long',
 //       day: 'numeric',
-//       year: 'numeric'
+//       year: 'numeric',
 //     });
 //   };
 
-//   // Calculate reading time
 //   const getReadingTime = (content) => {
 //     if (!content) return '2 min read';
 //     const words = content.split(/\s+/).length;
@@ -97,89 +124,104 @@
 //     return `${minutes} min read`;
 //   };
 
-//   // Handle share
+//   // ============================================================
+//   // SHARE
+//   // ============================================================
 //   const handleShare = async (platform = 'copy') => {
-//     const url = window.location.href;
-//     const title = post.title;
+//     if (!post) return;
+
+//     const url = typeof window !== 'undefined' ? window.location.href : '';
+//     const title = post.title || '';
+//     const text = `${title} — read more at GreenScape`;
+
+//     const openMap = {
+//       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+//       twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+//       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+//       whatsapp: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
+//       telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+//       reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
+//       email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
+//       pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(title)}`,
+//     };
 
 //     try {
-//       switch (platform) {
-//         case 'facebook':
-//           window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-//           break;
-//         case 'twitter':
-//           window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
-//           break;
-//         case 'linkedin':
-//           window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
-//           break;
-//         case 'copy':
+//       if (platform === 'copy') {
+//         if (navigator.clipboard && window.isSecureContext) {
 //           await navigator.clipboard.writeText(url);
-//           setCopied(true);
-//           setTimeout(() => setCopied(false), 2000);
-//           break;
-//         default:
-//           if (navigator.share) {
-//             await navigator.share({
-//               title: title,
-//               text: post.excerpt,
-//               url: url
-//             });
-//           } else {
-//             await navigator.clipboard.writeText(url);
-//             setCopied(true);
-//             setTimeout(() => setCopied(false), 2000);
-//           }
+//         } else {
+//           // Fallback for non-secure contexts
+//           const ta = document.createElement('textarea');
+//           ta.value = url;
+//           ta.style.position = 'fixed';
+//           ta.style.opacity = '0';
+//           document.body.appendChild(ta);
+//           ta.select();
+//           document.execCommand('copy');
+//           document.body.removeChild(ta);
+//         }
+//         setCopied(true);
+//         setTimeout(() => setCopied(false), 2000);
+//       } else if (platform === 'native') {
+//         if (navigator.share) {
+//           await navigator.share({ title, text, url });
+//         } else {
+//           await handleShare('copy');
+//         }
+//       } else if (openMap[platform]) {
+//         window.open(openMap[platform], '_blank', 'width=600,height=600,noopener,noreferrer');
 //       }
 //       setShowShareMenu(false);
-//     } catch (error) {
-//       console.error('Error sharing:', error);
+//     } catch (err) {
+//       console.error('Share error:', err);
 //     }
 //   };
 
-//   // Handle comment submission
+//   // ============================================================
+//   // COMMENTS
+//   // ============================================================
 //   const handleCommentSubmit = (e) => {
 //     e.preventDefault();
-    
-//     if (!commentName.trim() || !commentText.trim()) {
-//       return;
-//     }
+
+//     if (!commentName.trim() || !commentText.trim()) return;
 
 //     const newComment = {
 //       id: Date.now(),
 //       name: commentName,
 //       email: commentEmail,
 //       text: commentText,
-//       date: new Date().toISOString()
+//       date: new Date().toISOString(),
 //     };
 
 //     setComments([...comments, newComment]);
 //     setCommentText('');
 //     setCommentName('');
 //     setCommentEmail('');
-    
 //     alert('Comment posted successfully!');
 //   };
 
-// // Loading state - FIXED GARDEN BOOK
-// if (loading ) {
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50">
-//       <div className="text-center">
-//         <div className="relative mx-auto w-20 h-20">
-//           <div className="absolute inset-0 rounded-full border-4 border-green-200 border-t-green-600 animate-spin"></div>
-//           <div className="absolute inset-0 flex items-center justify-center">
-//             <BookOpen className="w-8 h-8 text-green-600" />
+//   // ============================================================
+//   // LOADING STATE
+//   // ============================================================
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50">
+//         <div className="text-center">
+//           <div className="relative mx-auto w-20 h-20">
+//             <div className="absolute inset-0 rounded-full border-4 border-green-200 border-t-green-600 animate-spin"></div>
+//             <div className="absolute inset-0 flex items-center justify-center">
+//               <BookOpen className="w-8 h-8 text-green-600" />
+//             </div>
 //           </div>
+//           <p className="mt-4 text-gray-600 font-medium">Loading articles...</p>
 //         </div>
-//         <p className="mt-4 text-gray-600 font-medium">Loading articles...</p>
 //       </div>
-//     </div>
-//   );
-// }
- 
+//     );
+//   }
 
-//   // Error state
+//   // ============================================================
+//   // ERROR STATE
+//   // ============================================================
 //   if (error || !post) {
 //     return (
 //       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -203,9 +245,12 @@
 //     );
 //   }
 
+//   // ============================================================
+//   // RENDER
+//   // ============================================================
 //   return (
 //     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-green-50/30">
-      
+
 //       {/* ========== BREADCRUMB ========== */}
 //       <div className="bg-white border-b border-gray-100">
 //         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -219,9 +264,7 @@
 //               Blog
 //             </Link>
 //             <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-//             <span className="text-gray-900 font-medium line-clamp-1">
-//               {post.title}
-//             </span>
+//             <span className="text-gray-900 font-medium line-clamp-1">{post.title}</span>
 //           </nav>
 //         </div>
 //       </div>
@@ -229,7 +272,6 @@
 //       {/* ========== ARTICLE HEADER ========== */}
 //       <header className="bg-white border-b border-gray-100">
 //         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-//           {/* Category */}
 //           {post.category && (
 //             <div className="mb-4">
 //               <span className="px-4 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-full shadow-lg">
@@ -238,19 +280,15 @@
 //             </div>
 //           )}
 
-//           {/* Title */}
 //           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
 //             {post.title}
 //           </h1>
 
-//           {/* Excerpt */}
 //           <p className="text-lg text-gray-600 font-medium mb-8 border-l-4 border-green-500 pl-4 italic">
 //             {post.excerpt}
 //           </p>
 
-//           {/* Meta Info */}
 //           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-//             {/* Author */}
 //             <div className="flex items-center gap-2">
 //               <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center">
 //                 <span className="text-lg font-bold text-white">
@@ -267,7 +305,6 @@
 
 //             <span className="text-gray-300">|</span>
 
-//             {/* Date */}
 //             <div className="flex items-center gap-1.5">
 //               <Calendar className="w-4 h-4" />
 //               <span>{formatDate(post.createdAt)}</span>
@@ -275,7 +312,6 @@
 
 //             <span className="text-gray-300">|</span>
 
-//             {/* Reading Time */}
 //             <div className="flex items-center gap-1.5">
 //               <Clock className="w-4 h-4" />
 //               <span>{getReadingTime(post.content)}</span>
@@ -292,89 +328,149 @@
 //             )}
 //           </div>
 
-//           {/* Action Buttons */}
+//           {/* ========== ACTION BUTTONS ========== */}
 //           <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-100">
-//             {/* Like Button */}
 //             <button
 //               onClick={() => setLiked(!liked)}
 //               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-//                 liked ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
+//                 liked
+//                   ? 'bg-red-50 text-red-600 border border-red-200'
+//                   : 'bg-gray-50 text-gray-600 border border-gray-200'
 //               }`}
 //             >
 //               <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
 //               {liked ? 'Liked' : 'Like'}
 //             </button>
 
-//             {/* Bookmark Button */}
 //             <button
 //               onClick={() => setBookmarked(!bookmarked)}
 //               className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-//                 bookmarked ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
+//                 bookmarked
+//                   ? 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+//                   : 'bg-gray-50 text-gray-600 border border-gray-200'
 //               }`}
 //             >
 //               <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
 //               {bookmarked ? 'Bookmarked' : 'Bookmark'}
 //             </button>
 
-//             {/* Share Button */}
-//             <div className="relative">
+//             {/* ========== SHARE MENU ========== */}
+//             <div className="relative" ref={shareMenuRef}>
 //               <button
-//                 onClick={() => setShowShareMenu(!showShareMenu)}
+//                 onClick={() => setShowShareMenu((v) => !v)}
 //                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all duration-300"
+//                 aria-haspopup="menu"
+//                 aria-expanded={showShareMenu}
 //               >
 //                 <Share2 className="w-4 h-4" />
 //                 Share
 //               </button>
 
-//               {/* DECENT SHARE DROPDOWN */}
-//         {showShareMenu && (
-//   <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 min-w-[300px]">
-//     <div className="text-sm font-semibold text-gray-500 mb-3 px-2">
-//       Share this article
-//     </div>
-//     <div className="space-y-1">
-//       <button
-//         onClick={() => handleShare('facebook')}
-//         className="flex items-center gap-3 w-full px-3 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
-//       >
-//         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
-//           <FacebookIcon className="w-5 h-5" />
-//         </div>
-//         <span className="font-medium text-base">Facebook</span>
-//       </button>
-//       <button
-//         onClick={() => handleShare('twitter')}
-//         className="flex items-center gap-3 w-full px-3 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-400 rounded-xl transition-all duration-300 group"
-//       >
-//         <div className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
-//           <TwitterIcon className="w-5 h-5" />
-//         </div>
-//         <span className="font-medium text-base">Twitter</span>
-//       </button>
-//       <button
-//         onClick={() => handleShare('linkedin')}
-//         className="flex items-center gap-3 w-full px-3 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
-//       >
-//         <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
-//           <LinkedinIcon className="w-5 h-5" />
-//         </div>
-//         <span className="font-medium text-base">LinkedIn</span>
-//       </button>
-//       <div className="border-t border-gray-100 my-2"></div>
-//       <button
-//         onClick={() => handleShare('copy')}
-//         className="flex items-center gap-3 w-full px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-300 group"
-//       >
-//         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 group-hover:scale-110 transition-all duration-300">
-//           {copied ? <Check className="w-5 h-5 text-green-600" /> : <Link2 className="w-5 h-5 text-gray-600" />}
-//         </div>
-//         <span className="font-medium text-base">{copied ? 'Copied!' : 'Copy Link'}</span>
-//       </button>
-//     </div>
-//   </div>
-// )}    
-  
+//               {showShareMenu && (
+//                 <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 min-w-[320px]">
+//                   <div className="flex items-center justify-between mb-3 px-2">
+//                     <div className="text-sm font-semibold text-gray-500">
+//                       Share this article
+//                     </div>
+//                     <button
+//                       onClick={() => setShowShareMenu(false)}
+//                       className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+//                       aria-label="Close share menu"
+//                     >
+//                       <X className="w-4 h-4" />
+//                     </button>
+//                   </div>
 
+//                   <div className="space-y-1">
+//                     {/* FACEBOOK */}
+//                     <button
+//                       onClick={() => handleShare('facebook')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+//                         <FacebookIcon className="w-4 h-4" />
+//                       </div>
+//                       <span className="font-medium">Facebook</span>
+//                     </button>
+
+//                     {/* TWITTER / X */}
+//                     <button
+//                       onClick={() => handleShare('twitter')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+//                         <TwitterIcon className="w-4 h-4" />
+//                       </div>
+//                       <span className="font-medium">Twitter / X</span>
+//                     </button>
+
+//                     {/* WHATSAPP */}
+//                     <button
+//                       onClick={() => handleShare('whatsapp')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+//                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+//                           <path d="M20.52 3.48A11.9 11.9 0 0012 0C5.38 0 0 5.38 0 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62A11.9 11.9 0 0012 24c6.62 0 12-5.38 12-12 0-3.2-1.25-6.21-3.48-8.52zM12 22a9.95 9.95 0 01-5.06-1.38l-.36-.22-3.67.96.98-3.58-.24-.37A9.96 9.96 0 012 12C2 6.49 6.49 2 12 2c2.67 0 5.18 1.04 7.07 2.93A9.93 9.93 0 0122 12c0 5.51-4.49 10-10 10z"/>
+//                         </svg>
+//                       </div>
+//                       <span className="font-medium">WhatsApp</span>
+//                     </button>
+
+//                     {/* LINKEDIN */}
+//                     <button
+//                       onClick={() => handleShare('linkedin')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-blue-700 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+//                         <LinkedinIcon className="w-4 h-4" />
+//                       </div>
+//                       <span className="font-medium">LinkedIn</span>
+//                     </button>
+
+//                     {/* EMAIL */}
+//                     <button
+//                       onClick={() => handleShare('email')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+//                         <Mail className="w-4 h-4" />
+//                       </div>
+//                       <span className="font-medium">Email</span>
+//                     </button>
+
+//                     <div className="border-t border-gray-100 my-2"></div>
+
+//                     {/* NATIVE SHARE (mobile) */}
+//                     {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+//                       <button
+//                         onClick={() => handleShare('native')}
+//                         className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group"
+//                       >
+//                         <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-all duration-300">
+//                           <Share2 className="w-4 h-4 text-gray-600" />
+//                         </div>
+//                         <span className="font-medium">More options…</span>
+//                       </button>
+//                     )}
+
+//                     {/* COPY LINK */}
+//                     <button
+//                       onClick={() => handleShare('copy')}
+//                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-300 group"
+//                     >
+//                       <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-all duration-300">
+//                         {copied ? (
+//                           <Check className="w-4 h-4 text-green-600" />
+//                         ) : (
+//                           <Link2 className="w-4 h-4 text-gray-600" />
+//                         )}
+//                       </div>
+//                       <span className="font-medium">{copied ? 'Copied!' : 'Copy Link'}</span>
+//                     </button>
+//                   </div>
+//                 </div>
+//               )}
 //             </div>
 //           </div>
 //         </div>
@@ -397,7 +493,6 @@
 //       {/* ========== ARTICLE CONTENT ========== */}
 //       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 //         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 md:p-12">
-//           {/* Content */}
 //           <div className="prose prose-lg max-w-none">
 //             {post.content.split('\n').map((paragraph, index) => (
 //               <p key={index} className="text-gray-700 mb-6 leading-relaxed text-lg">
@@ -406,7 +501,6 @@
 //             ))}
 //           </div>
 
-//           {/* Tags */}
 //           {post.tags && post.tags.length > 0 && (
 //             <div className="mt-10 pt-6 border-t border-gray-100">
 //               <div className="flex items-center gap-2 mb-4">
@@ -427,7 +521,7 @@
 //             </div>
 //           )}
 
-//           {/* Share Section */}
+//           {/* INLINE SHARE ROW */}
 //           <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
 //             <div className="text-sm text-gray-500">
 //               Found this helpful? Share with others!
@@ -455,13 +549,17 @@
 //                 onClick={() => handleShare('copy')}
 //                 className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-100 hover:scale-110 transition-all duration-300"
 //               >
-//                 {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4" />}
+//                 {copied ? (
+//                   <Check className="w-4 h-4 text-green-600" />
+//                 ) : (
+//                   <Link2 className="w-4 h-4" />
+//                 )}
 //               </button>
 //             </div>
 //           </div>
 //         </div>
 
-//         {/* Author Bio */}
+//         {/* AUTHOR BIO */}
 //         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-6 mt-8 flex items-center gap-4">
 //           <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
 //             <span className="text-2xl font-bold text-white">
@@ -478,7 +576,7 @@
 //           </div>
 //         </div>
 
-//         {/* Comments Section */}
+//         {/* COMMENTS */}
 //         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-8">
 //           <button
 //             onClick={() => setShowComments(!showComments)}
@@ -490,11 +588,8 @@
 
 //           {showComments && (
 //             <>
-//               {/* Comment Form */}
 //               <form onSubmit={handleCommentSubmit} className="mb-6 bg-gray-50 rounded-xl p-4">
-//                 <h4 className="text-sm font-semibold text-gray-900 mb-3">
-//                   Leave a Comment
-//                 </h4>
+//                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Leave a Comment</h4>
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 //                   <input
 //                     type="text"
@@ -528,7 +623,6 @@
 //                 </button>
 //               </form>
 
-//               {/* Comments List */}
 //               {comments.length > 0 ? (
 //                 <div className="space-y-4">
 //                   {comments.map((comment) => (
@@ -541,9 +635,7 @@
 //                       <div>
 //                         <div className="flex items-center gap-2 mb-1">
 //                           <p className="text-sm font-semibold text-gray-900">{comment.name}</p>
-//                           <span className="text-xs text-gray-400">
-//                             • {formatDate(comment.date)}
-//                           </span>
+//                           <span className="text-xs text-gray-400">• {formatDate(comment.date)}</span>
 //                         </div>
 //                         <p className="text-sm text-gray-600">{comment.text}</p>
 //                       </div>
@@ -562,18 +654,15 @@
 //       {relatedPosts.length > 0 && (
 //         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 //           <div className="flex items-center justify-between mb-8">
-//             <h2 className="text-2xl font-bold text-gray-900">
-//               Related Articles
-//             </h2>
+//             <h2 className="text-2xl font-bold text-gray-900">Related Articles</h2>
 //             <Link
 //               href="/blog"
 //               className="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
 //             >
-//               View All
-//               <ArrowRight className="w-4 h-4" />
+//               View All <ArrowRight className="w-4 h-4" />
 //             </Link>
 //           </div>
-          
+
 //           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 //             {relatedPosts.map((relatedPost) => (
 //               <BlogCard key={relatedPost._id} post={relatedPost} />
@@ -588,9 +677,7 @@
 //           <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-8 relative overflow-hidden">
 //             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
 //             <div className="relative">
-//               <h2 className="text-2xl font-bold text-white mb-6">
-//                 Popular Articles
-//               </h2>
+//               <h2 className="text-2xl font-bold text-white mb-6">Popular Articles</h2>
 //               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 //                 {popularPosts.map((popularPost, index) => (
 //                   <Link
@@ -634,29 +721,25 @@
 
 
 
-
-
-// new version 7/10/2026
-// app/blog/[slug]/page.jsx - COMPLETE FIXED
+//  new version
+// app/blog/[slug]/page.jsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, ArrowRight, Calendar, Clock, Eye, Share2,
-  Heart, Bookmark, Tag, User, ChevronRight,
-  Loader2, MessageCircle, Link2, Home,
-  ExternalLink, Globe, Mail, Copy, Check,
-  BookOpen, X
+  Heart, Bookmark, Tag, ChevronRight,
+  MessageCircle, Link2, Home,
+  Mail, Check, BookOpen, X
 } from 'lucide-react';
-import { FacebookIcon, TwitterIcon, LinkedinIcon, InstagramIcon } from '@/components/SocialIcons';
+import { FacebookIcon, TwitterIcon, LinkedinIcon } from '@/components/SocialIcons';
 import { getPostBySlug, getRelatedPosts, getPopularPosts } from '../../lib/blogApi';
 import BlogCard from '@/components/BlogCard';
 
 export default function BlogPostPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug;
 
   const [post, setPost] = useState(null);
@@ -693,9 +776,7 @@ export default function BlogPostPage() {
         }
 
         const relatedResponse = await getRelatedPosts(response.post._id, 3);
-        if (relatedResponse?.posts) {
-          setRelatedPosts(relatedResponse.posts);
-        }
+        if (relatedResponse?.posts) setRelatedPosts(relatedResponse.posts);
       } else {
         setError('Post not found');
       }
@@ -709,9 +790,7 @@ export default function BlogPostPage() {
 
   const fetchPopularPosts = async () => {
     const response = await getPopularPosts(4);
-    if (response?.posts) {
-      setPopularPosts(response.posts);
-    }
+    if (response?.posts) setPopularPosts(response.posts);
   };
 
   useEffect(() => {
@@ -723,7 +802,7 @@ export default function BlogPostPage() {
   }, [slug]);
 
   // ============================================================
-  // CLOSE SHARE MENU ON OUTSIDE CLICK
+  // CLOSE SHARE MENU ON OUTSIDE CLICK / ESC
   // ============================================================
   useEffect(() => {
     if (!showShareMenu) return;
@@ -732,9 +811,7 @@ export default function BlogPostPage() {
         setShowShareMenu(false);
       }
     };
-    const onEsc = (e) => {
-      if (e.key === 'Escape') setShowShareMenu(false);
-    };
+    const onEsc = (e) => e.key === 'Escape' && setShowShareMenu(false);
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onEsc);
     return () => {
@@ -758,60 +835,88 @@ export default function BlogPostPage() {
   const getReadingTime = (content) => {
     if (!content) return '2 min read';
     const words = content.split(/\s+/).length;
-    const minutes = Math.ceil(words / 200);
-    return `${minutes} min read`;
+    return `${Math.ceil(words / 200)} min read`;
   };
 
   // ============================================================
-  // SHARE
+  // SHARE — synchronous open, no popup blocking
   // ============================================================
-  const handleShare = async (platform = 'copy') => {
+  const handleShare = (platform) => {
     if (!post) return;
 
     const url = typeof window !== 'undefined' ? window.location.href : '';
     const title = post.title || '';
     const text = `${title} — read more at GreenScape`;
 
-    const openMap = {
+    // Build the URL per platform
+    const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
       twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
+      whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(`${text} ${url}`)}`,
       telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
       reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
       email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
-      pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(title)}`,
     };
 
-    try {
-      if (platform === 'copy') {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(url);
-        } else {
-          // Fallback for non-secure contexts
-          const ta = document.createElement('textarea');
-          ta.value = url;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
+    // COPY — no popup, safe to do inline
+    if (platform === 'copy') {
+      const done = () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } else if (platform === 'native') {
-        if (navigator.share) {
-          await navigator.share({ title, text, url });
-        } else {
-          await handleShare('copy');
-        }
-      } else if (openMap[platform]) {
-        window.open(openMap[platform], '_blank', 'width=600,height=600,noopener,noreferrer');
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+      } else {
+        fallbackCopy(url, done);
       }
       setShowShareMenu(false);
-    } catch (err) {
-      console.error('Share error:', err);
+      return;
+    }
+
+    // NATIVE share sheet (mobile)
+    if (platform === 'native') {
+      if (navigator.share) {
+        navigator.share({ title, text, url }).catch(() => {});
+      } else {
+        fallbackCopy(url, () => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      }
+      setShowShareMenu(false);
+      return;
+    }
+
+    // EXTERNAL — open synchronously to preserve user gesture
+    const target = shareUrls[platform];
+    if (!target) {
+      setShowShareMenu(false);
+      return;
+    }
+
+    // Synchronous open = user gesture still valid = no popup block
+    const w = window.open(target, '_blank', 'noopener,noreferrer');
+    // If popup was blocked, fall back to same-tab navigation
+    if (!w || w.closed || typeof w.closed === 'undefined') {
+      window.location.href = target;
+    }
+    setShowShareMenu(false);
+  };
+
+  const fallbackCopy = (text, cb) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      cb && cb();
+    } catch (e) {
+      console.warn('Copy failed:', e);
     }
   };
 
@@ -820,9 +925,7 @@ export default function BlogPostPage() {
   // ============================================================
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-
     if (!commentName.trim() || !commentText.trim()) return;
-
     const newComment = {
       id: Date.now(),
       name: commentName,
@@ -830,7 +933,6 @@ export default function BlogPostPage() {
       text: commentText,
       date: new Date().toISOString(),
     };
-
     setComments([...comments, newComment]);
     setCommentText('');
     setCommentName('');
@@ -839,7 +941,7 @@ export default function BlogPostPage() {
   };
 
   // ============================================================
-  // LOADING STATE
+  // LOADING / ERROR
   // ============================================================
   if (loading) {
     return (
@@ -851,23 +953,18 @@ export default function BlogPostPage() {
               <BookOpen className="w-8 h-8 text-green-600" />
             </div>
           </div>
-          <p className="mt-4 text-gray-600 font-medium">Loading articles...</p>
+          <p className="mt-4 text-gray-600 font-medium">Loading article...</p>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // ERROR STATE
-  // ============================================================
   if (error || !post) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center max-w-md px-4">
           <div className="text-6xl mb-4">📚</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {error || 'Post not found'}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || 'Post not found'}</h1>
           <p className="text-gray-600 mb-8">
             The article you're looking for doesn't exist or has been removed.
           </p>
@@ -875,13 +972,15 @@ export default function BlogPostPage() {
             href="/blog"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 transition-all"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Blog
+            <ArrowLeft className="w-4 h-4" /> Back to Blog
           </Link>
         </div>
       </div>
     );
   }
+
+  const nativeShareAvailable =
+    typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // ============================================================
   // RENDER
@@ -889,39 +988,32 @@ export default function BlogPostPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-green-50/30">
 
-      {/* ========== BREADCRUMB ========== */}
+      {/* BREADCRUMB */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <nav className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/" className="flex items-center gap-1 hover:text-green-600 transition-colors">
-              <Home className="w-3.5 h-3.5" />
-              Home
+            <Link href="/" className="flex items-center gap-1 hover:text-green-600">
+              <Home className="w-3.5 h-3.5" /> Home
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-            <Link href="/blog" className="hover:text-green-600 transition-colors">
-              Blog
-            </Link>
+            <Link href="/blog" className="hover:text-green-600">Blog</Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
             <span className="text-gray-900 font-medium line-clamp-1">{post.title}</span>
           </nav>
         </div>
       </div>
 
-      {/* ========== ARTICLE HEADER ========== */}
+      {/* HEADER */}
       <header className="bg-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {post.category && (
-            <div className="mb-4">
-              <span className="px-4 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-full shadow-lg">
-                {post.category}
-              </span>
-            </div>
+            <span className="inline-block px-4 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-semibold rounded-full shadow-lg mb-4">
+              {post.category}
+            </span>
           )}
-
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
             {post.title}
           </h1>
-
           <p className="text-lg text-gray-600 font-medium mb-8 border-l-4 border-green-500 pl-4 italic">
             {post.excerpt}
           </p>
@@ -929,9 +1021,7 @@ export default function BlogPostPage() {
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">
-                  {post.author?.firstName?.[0] || 'A'}
-                </span>
+                <span className="text-lg font-bold text-white">{post.author?.firstName?.[0] || 'A'}</span>
               </div>
               <div>
                 <p className="font-medium text-gray-900">
@@ -940,40 +1030,24 @@ export default function BlogPostPage() {
                 <p className="text-xs text-gray-400">Author</p>
               </div>
             </div>
-
             <span className="text-gray-300">|</span>
-
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" />
-              <span>{formatDate(post.createdAt)}</span>
-            </div>
-
+            <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /><span>{formatDate(post.createdAt)}</span></div>
             <span className="text-gray-300">|</span>
-
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              <span>{getReadingTime(post.content)}</span>
-            </div>
-
+            <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /><span>{getReadingTime(post.content)}</span></div>
             {post.views > 0 && (
               <>
                 <span className="text-gray-300">|</span>
-                <div className="flex items-center gap-1.5">
-                  <Eye className="w-4 h-4" />
-                  <span>{post.views} views</span>
-                </div>
+                <div className="flex items-center gap-1.5"><Eye className="w-4 h-4" /><span>{post.views} views</span></div>
               </>
             )}
           </div>
 
-          {/* ========== ACTION BUTTONS ========== */}
+          {/* ACTIONS */}
           <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-100">
             <button
               onClick={() => setLiked(!liked)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                liked
-                  ? 'bg-red-50 text-red-600 border border-red-200'
-                  : 'bg-gray-50 text-gray-600 border border-gray-200'
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 ${
+                liked ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
               }`}
             >
               <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
@@ -982,17 +1056,14 @@ export default function BlogPostPage() {
 
             <button
               onClick={() => setBookmarked(!bookmarked)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                bookmarked
-                  ? 'bg-yellow-50 text-yellow-600 border border-yellow-200'
-                  : 'bg-gray-50 text-gray-600 border border-gray-200'
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 ${
+                bookmarked ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-200'
               }`}
             >
               <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
               {bookmarked ? 'Bookmarked' : 'Bookmark'}
             </button>
 
-            {/* ========== SHARE MENU ========== */}
             <div className="relative" ref={shareMenuRef}>
               <button
                 onClick={() => setShowShareMenu((v) => !v)}
@@ -1000,113 +1071,103 @@ export default function BlogPostPage() {
                 aria-haspopup="menu"
                 aria-expanded={showShareMenu}
               >
-                <Share2 className="w-4 h-4" />
-                Share
+                <Share2 className="w-4 h-4" /> Share
               </button>
 
               {showShareMenu && (
                 <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 min-w-[320px]">
                   <div className="flex items-center justify-between mb-3 px-2">
-                    <div className="text-sm font-semibold text-gray-500">
-                      Share this article
-                    </div>
+                    <div className="text-sm font-semibold text-gray-500">Share this article</div>
                     <button
                       onClick={() => setShowShareMenu(false)}
                       className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                      aria-label="Close share menu"
+                      aria-label="Close"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
                   <div className="space-y-1">
-                    {/* FACEBOOK */}
                     <button
                       onClick={() => handleShare('facebook')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+                      <span className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <FacebookIcon className="w-4 h-4" />
-                      </div>
+                      </span>
                       <span className="font-medium">Facebook</span>
                     </button>
 
-                    {/* TWITTER / X */}
                     <button
                       onClick={() => handleShare('twitter')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+                      <span className="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <TwitterIcon className="w-4 h-4" />
-                      </div>
+                      </span>
                       <span className="font-medium">Twitter / X</span>
                     </button>
 
-                    {/* WHATSAPP */}
                     <button
                       onClick={() => handleShare('whatsapp')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+                      <span className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                          <path d="M20.52 3.48A11.9 11.9 0 0012 0C5.38 0 0 5.38 0 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62A11.9 11.9 0 0012 24c6.62 0 12-5.38 12-12 0-3.2-1.25-6.21-3.48-8.52zM12 22a9.95 9.95 0 01-5.06-1.38l-.36-.22-3.67.96.98-3.58-.24-.37A9.96 9.96 0 012 12C2 6.49 6.49 2 12 2c2.67 0 5.18 1.04 7.07 2.93A9.93 9.93 0 0122 12c0 5.51-4.49 10-10 10z"/>
+                          <path d="M20.5 3.5A11.9 11.9 0 0012 0C5.4 0 0 5.4 0 12c0 2.1.5 4.2 1.6 6L0 24l6.2-1.6A11.9 11.9 0 0012 24c6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.5zM12 22a10 10 0 01-5.1-1.4l-.3-.2-3.7 1 1-3.6-.2-.4A10 10 0 012 12C2 6.5 6.5 2 12 2c2.7 0 5.2 1 7 2.9A9.9 9.9 0 0122 12c0 5.5-4.5 10-10 10zm5.5-7.5c-.3-.2-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.4.2-.6.1-.3-.2-1.3-.5-2.5-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.2.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.7-.9-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4z"/>
                         </svg>
-                      </div>
+                      </span>
                       <span className="font-medium">WhatsApp</span>
                     </button>
 
-                    {/* LINKEDIN */}
                     <button
                       onClick={() => handleShare('linkedin')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-blue-700 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+                      <span className="w-9 h-9 bg-blue-700 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <LinkedinIcon className="w-4 h-4" />
-                      </div>
+                      </span>
                       <span className="font-medium">LinkedIn</span>
                     </button>
 
-                    {/* EMAIL */}
                     <button
                       onClick={() => handleShare('email')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300">
+                      <span className="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-all">
                         <Mail className="w-4 h-4" />
-                      </div>
+                      </span>
                       <span className="font-medium">Email</span>
                     </button>
 
-                    <div className="border-t border-gray-100 my-2"></div>
+                    <div className="border-t border-gray-100 my-2" />
 
-                    {/* NATIVE SHARE (mobile) */}
-                    {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                    {nativeShareAvailable && (
                       <button
                         onClick={() => handleShare('native')}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-300 group"
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group"
                       >
-                        <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-all duration-300">
+                        <span className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200">
                           <Share2 className="w-4 h-4 text-gray-600" />
-                        </div>
+                        </span>
                         <span className="font-medium">More options…</span>
                       </button>
                     )}
 
-                    {/* COPY LINK */}
                     <button
                       onClick={() => handleShare('copy')}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-300 group"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-all group"
                     >
-                      <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-all duration-300">
-                        {copied ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Link2 className="w-4 h-4 text-gray-600" />
-                        )}
-                      </div>
+                      <span className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200">
+                        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4 text-gray-600" />}
+                      </span>
                       <span className="font-medium">{copied ? 'Copied!' : 'Copy Link'}</span>
                     </button>
                   </div>
+
+                  <p className="mt-3 px-2 text-[11px] text-gray-400 leading-relaxed">
+                    Tip: If Facebook/Twitter asks you to log in, that's normal — they require an account to share. Log in once and it stays logged in.
+                  </p>
                 </div>
               )}
             </div>
@@ -1114,7 +1175,7 @@ export default function BlogPostPage() {
         </div>
       </header>
 
-      {/* ========== FEATURED IMAGE ========== */}
+      {/* IMAGE */}
       {post.image && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
@@ -1128,18 +1189,16 @@ export default function BlogPostPage() {
         </div>
       )}
 
-      {/* ========== ARTICLE CONTENT ========== */}
+      {/* CONTENT */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 md:p-12">
           <div className="prose prose-lg max-w-none">
-            {post.content.split('\n').map((paragraph, index) => (
-              <p key={index} className="text-gray-700 mb-6 leading-relaxed text-lg">
-                {paragraph}
-              </p>
+            {post.content.split('\n').map((p, i) => (
+              <p key={i} className="text-gray-700 mb-6 leading-relaxed text-lg">{p}</p>
             ))}
           </div>
 
-          {post.tags && post.tags.length > 0 && (
+          {post.tags?.length > 0 && (
             <div className="mt-10 pt-6 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-4">
                 <Tag className="w-5 h-5 text-green-600" />
@@ -1147,11 +1206,7 @@ export default function BlogPostPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/blog?tag=${tag}`}
-                    className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100 transition-colors"
-                  >
+                  <Link key={tag} href={`/blog?tag=${tag}`} className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">
                     #{tag}
                   </Link>
                 ))}
@@ -1159,39 +1214,20 @@ export default function BlogPostPage() {
             </div>
           )}
 
-          {/* INLINE SHARE ROW */}
-          <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Found this helpful? Share with others!
-            </div>
+          <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+            <div className="text-sm text-gray-500">Found this helpful? Share with others!</div>
             <div className="flex gap-2">
-              <button
-                onClick={() => handleShare('facebook')}
-                className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all duration-300"
-              >
+              <button onClick={() => handleShare('facebook')} className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all">
                 <FacebookIcon className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => handleShare('twitter')}
-                className="w-10 h-10 bg-blue-50 text-blue-400 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all duration-300"
-              >
+              <button onClick={() => handleShare('twitter')} className="w-10 h-10 bg-blue-50 text-blue-400 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all">
                 <TwitterIcon className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => handleShare('linkedin')}
-                className="w-10 h-10 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all duration-300"
-              >
+              <button onClick={() => handleShare('linkedin')} className="w-10 h-10 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all">
                 <LinkedinIcon className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => handleShare('copy')}
-                className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-100 hover:scale-110 transition-all duration-300"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Link2 className="w-4 h-4" />
-                )}
+              <button onClick={() => handleShare('copy')} className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-100 hover:scale-110 transition-all">
+                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -1200,9 +1236,7 @@ export default function BlogPostPage() {
         {/* AUTHOR BIO */}
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-6 mt-8 flex items-center gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl font-bold text-white">
-              {post.author?.firstName?.[0] || 'A'}
-            </span>
+            <span className="text-2xl font-bold text-white">{post.author?.firstName?.[0] || 'A'}</span>
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -1216,12 +1250,8 @@ export default function BlogPostPage() {
 
         {/* COMMENTS */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-8">
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4"
-          >
-            <MessageCircle className="w-5 h-5 text-green-600" />
-            Comments ({comments.length})
+          <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+            <MessageCircle className="w-5 h-5 text-green-600" /> Comments ({comments.length})
           </button>
 
           {showComments && (
@@ -1229,53 +1259,28 @@ export default function BlogPostPage() {
               <form onSubmit={handleCommentSubmit} className="mb-6 bg-gray-50 rounded-xl p-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Leave a Comment</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                  <input
-                    type="text"
-                    value={commentName}
-                    onChange={(e) => setCommentName(e.target.value)}
-                    placeholder="Your Name *"
-                    className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    required
-                  />
-                  <input
-                    type="email"
-                    value={commentEmail}
-                    onChange={(e) => setCommentEmail(e.target.value)}
-                    placeholder="Your Email"
-                    className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
+                  <input type="text" value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Your Name *" className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" required />
+                  <input type="email" value={commentEmail} onChange={(e) => setCommentEmail(e.target.value)} placeholder="Your Email" className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
-                <textarea
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Write your comment... *"
-                  rows="3"
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-medium hover:from-green-700 hover:to-emerald-700 transition-all"
-                >
+                <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write your comment... *" rows="3" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-3" required />
+                <button type="submit" className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-medium hover:from-green-700 hover:to-emerald-700">
                   Post Comment
                 </button>
               </form>
 
               {comments.length > 0 ? (
                 <div className="space-y-4">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3 bg-gray-50 rounded-xl p-4">
+                  {comments.map((c) => (
+                    <div key={c.id} className="flex gap-3 bg-gray-50 rounded-xl p-4">
                       <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-white">
-                          {comment.name[0].toUpperCase()}
-                        </span>
+                        <span className="text-sm font-bold text-white">{c.name[0].toUpperCase()}</span>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-gray-900">{comment.name}</p>
-                          <span className="text-xs text-gray-400">• {formatDate(comment.date)}</span>
+                          <p className="text-sm font-semibold text-gray-900">{c.name}</p>
+                          <span className="text-xs text-gray-400">• {formatDate(c.date)}</span>
                         </div>
-                        <p className="text-sm text-gray-600">{comment.text}</p>
+                        <p className="text-sm text-gray-600">{c.text}</p>
                       </div>
                     </div>
                   ))}
@@ -1288,28 +1293,24 @@ export default function BlogPostPage() {
         </div>
       </main>
 
-      {/* ========== RELATED POSTS ========== */}
+      {/* RELATED */}
       {relatedPosts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Related Articles</h2>
-            <Link
-              href="/blog"
-              className="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
-            >
+            <Link href="/blog" className="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-1">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedPosts.map((relatedPost) => (
-              <BlogCard key={relatedPost._id} post={relatedPost} />
+            {relatedPosts.map((rp) => (
+              <BlogCard key={rp._id} post={rp} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ========== POPULAR POSTS ========== */}
+      {/* POPULAR */}
       {popularPosts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-8 relative overflow-hidden">
@@ -1317,21 +1318,11 @@ export default function BlogPostPage() {
             <div className="relative">
               <h2 className="text-2xl font-bold text-white mb-6">Popular Articles</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {popularPosts.map((popularPost, index) => (
-                  <Link
-                    key={popularPost._id}
-                    href={`/blog/${popularPost.slug}`}
-                    className="group bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300"
-                  >
-                    <span className="text-3xl font-bold text-white/30 group-hover:text-white/50 transition-colors">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <h3 className="text-sm font-medium text-white mt-2 line-clamp-2">
-                      {popularPost.title}
-                    </h3>
-                    <p className="text-xs text-green-200 mt-2">
-                      {formatDate(popularPost.createdAt)}
-                    </p>
+                {popularPosts.map((pp, i) => (
+                  <Link key={pp._id} href={`/blog/${pp.slug}`} className="group bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all">
+                    <span className="text-3xl font-bold text-white/30 group-hover:text-white/50">{String(i + 1).padStart(2, '0')}</span>
+                    <h3 className="text-sm font-medium text-white mt-2 line-clamp-2">{pp.title}</h3>
+                    <p className="text-xs text-green-200 mt-2">{formatDate(pp.createdAt)}</p>
                   </Link>
                 ))}
               </div>
@@ -1340,14 +1331,9 @@ export default function BlogPostPage() {
         </section>
       )}
 
-      {/* ========== BACK TO BLOG ========== */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to all articles
+        <Link href="/blog" className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
+          <ArrowLeft className="w-4 h-4" /> Back to all articles
         </Link>
       </div>
     </div>

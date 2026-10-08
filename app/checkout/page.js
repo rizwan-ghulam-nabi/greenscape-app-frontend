@@ -423,12 +423,12 @@ function CheckoutContent() {
         {isBuyNow && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm flex items-center justify-between flex-wrap gap-2">
             <span>⚡ Buying this item directly (skipping cart).</span>
-            <Link
+            <button
               onClick={() => router.push('/checkout')}
               className="underline font-medium hover:no-underline"
             >
               Switch to cart checkout
-            </Link>
+            </button>
           </div>
         )}
 

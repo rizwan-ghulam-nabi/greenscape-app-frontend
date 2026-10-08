@@ -12,7 +12,7 @@ export default function Features() {
     {
       icon: <Truck className="w-6 h-6 text-[#2B7A4B]" />,
       title: 'Fast & Free Shipping',
-      desc: 'On orders over $79'
+      desc: 'On orders over 1000RS'
     },
     {
       icon: <ShieldCheck className="w-6 h-6 text-[#2B7A4B]" />,

@@ -301,7 +301,7 @@ export default function SignUpPage() {
               </div>
               <div>
                 <h4 className="font-semibold text-[#1A3C34] text-[15px]">Fast &amp; Free Shipping</h4>
-                <p className="text-[14px] text-gray-600 leading-snug">Free shipping on orders over $79.</p>
+                <p className="text-[14px] text-gray-600 leading-snug">Free shipping on orders over 1000Rs.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">

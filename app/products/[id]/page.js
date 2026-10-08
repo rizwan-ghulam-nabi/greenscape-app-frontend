@@ -284,10 +284,19 @@ export default function ProductDetailPage() {
                 </span>
               </button>
 
-              <button className="flex-1 py-3.5 bg-white text-[#1A3C34] border-2 border-[#1A3C34] rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+              {/* <button className="flex-1 py-3.5 bg-white text-[#1A3C34] border-2 border-[#1A3C34] rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                 <span className="text-lg">⚡</span>
                 Buy Now
-              </button>
+              </button> */}
+
+            <Link
+  href="/checkout"
+  className="flex-1 py-3.5 bg-white text-[#1A3C34] border-2 border-[#1A3C34] rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+>
+  <span className="text-lg">⚡</span>
+  Buy Now
+</Link>
+
             </div>
           </div>
         </div>

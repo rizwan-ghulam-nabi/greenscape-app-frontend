@@ -233,7 +233,7 @@ export default function HeroCarousel() {
   const slides = [
     {
       id: 1,
-      image: '/hero-section/hero1.jpg',
+      image: '/hero-section/hero1.png',
       tag: 'Trusted by 50,000+ Gardeners',
       title: 'Everything Your Garden Needs',
       subtitle: 'All in One Place',

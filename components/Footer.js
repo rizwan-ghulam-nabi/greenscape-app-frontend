@@ -220,7 +220,7 @@ export default function Footer() {
               <li><Link href="/help" prefetch={false} className="hover:text-white transition-colors">Help Center</Link></li>
               <li><Link href="/shipping-policy" prefetch={false} className="hover:text-white transition-colors">Shipping Info</Link></li>
               <li><Link href="/refund-policy" prefetch={false} className="hover:text-white transition-colors">Returns &amp; Refunds</Link></li>
-              <li><Link href="/account/[orderId]/track-order" prefetch={false} className="hover:text-white transition-colors">Track Your Order</Link></li>
+              <li><Link href="/account/track-order" prefetch={false} className="hover:text-white transition-colors">Track Your Order</Link></li>
               <li><Link href="/faqs" prefetch={false} className="hover:text-white transition-colors">FAQs</Link></li>
               <li><Link href="/size-guide" prefetch={false} className="hover:text-white transition-colors">Size Guide</Link></li>
             </ul>

@@ -926,7 +926,7 @@ export default function UserSidePanel() {
           else setMemberStatus('New');
         }
 
-        const wishlistRes = await fetch('/api/wishlist', { credentials: 'include' });
+        const wishlistRes = await fetch('/app/wishlist', { credentials: 'include' });
         if (wishlistRes.ok) {
           const wishlistData = await wishlistRes.json();
           const wishlistItems = wishlistData.items || wishlistData.wishlist || [];

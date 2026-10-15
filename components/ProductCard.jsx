@@ -276,8 +276,13 @@ import Image from 'next/image';
 import { Star, ShoppingCart, Heart, Zap } from 'lucide-react';
 import { getProductDiscount } from '@/app/utils/discountApi';
 import { addToCart } from '@/app/utils/cart';
+import {
+  addToWishlist,
+  removeFromWishlist,
+  isInWishlist,
+} from '@/app/utils/wishlist';
 
-// ✅ FIX: Cloudinary image transforms — one per usage context
+// ✅ Cloudinary transforms
 const TRANSFORM_GRID = 'w_500,h_500,c_fill,g_auto,q_auto:good,f_auto';
 const TRANSFORM_LIST = 'w_400,h_400,c_fill,g_auto,q_auto:good,f_auto';
 
@@ -289,16 +294,52 @@ const optimizeProductImage = (url, transform = TRANSFORM_GRID) => {
 };
 
 export default function ProductCard({ product, viewMode = 'grid', priority = false }) {
+  const productId = product._id || product.id;
+
   const [discount, setDiscount] = useState(null);
   const [finalPrice, setFinalPrice] = useState(product.price);
   const [savings, setSavings] = useState(0);
   const [loadingDiscount, setLoadingDiscount] = useState(true);
   const [added, setAdded] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
 
-  // ✅ Fetch discount (unchanged)
+  // ============================================================
+  // ✅ WISHLIST STATE SYNC
+  // ============================================================
+  useEffect(() => {
+    if (!productId) return;
+
+    // Initial state from localStorage
+    setInWishlist(isInWishlist(productId));
+
+    // Listen for updates from other ProductCards / wishlist page
+    const handleUpdate = () => setInWishlist(isInWishlist(productId));
+    window.addEventListener('wishlistUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleUpdate);
+    };
+  }, [productId]);
+
+  const handleToggleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!productId) return;
+
+    if (inWishlist) {
+      removeFromWishlist(productId);
+      setInWishlist(false);
+    } else {
+      addToWishlist(productId);
+      setInWishlist(true);
+    }
+  };
+
+  // ============================================================
+  // DISCOUNT
+  // ============================================================
   useEffect(() => {
     const fetchDiscount = async () => {
-      const productId = product._id || product.id;
       if (!productId) {
         setLoadingDiscount(false);
         return;
@@ -321,14 +362,14 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
     };
 
     fetchDiscount();
-  }, [product._id, product.id, product.price]);
+  }, [productId, product.price]);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const cartProduct = {
-      id: product._id || product.id,
+      id: productId,
       name: product.name,
       desc: product.desc || product.description,
       price: finalPrice,
@@ -359,7 +400,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
       : Math.round((savings / product.price) * 100)
     : 0;
 
-  // ✅ FIX: optimized image source (used in both views)
   const optimizedImageSrc = optimizeProductImage(
     product.image || product.images?.[0] || '/placeholder-product.jpg',
     viewMode === 'list' ? TRANSFORM_LIST : TRANSFORM_GRID
@@ -369,14 +409,21 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
   if (viewMode === 'list') {
     return (
       <Link
-        href={`/products/${product.slug || product._id}`}
+        href={`/products/${product.slug || productId}`}
         className="relative group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex gap-6 p-4"
       >
         <button
-          aria-label={`Add ${product.name} to wishlist`}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors"
+          type="button"
+          onClick={handleToggleWishlist}
+          aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={inWishlist}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
         >
-          <Heart className="w-5 h-5" />
+          <Heart
+            className={`w-5 h-5 transition-colors ${
+              inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'
+            }`}
+          />
         </button>
 
         <div className="relative w-48 h-48 flex-shrink-0 bg-[#F8F9F6] rounded-lg overflow-hidden">
@@ -388,7 +435,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
               </span>
             </div>
           )}
-          {/* ✅ FIX: optimized URL + correct sizes + priority support */}
           <Image
             src={optimizedImageSrc}
             alt={product.name || 'Product'}
@@ -408,7 +454,7 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
             {product.desc || product.description}
           </p>
           <div className="flex items-center gap-1 text-[10px] text-gray-400">
-            <div className="flex text-[#FFB800]">
+            <div className="flex text-[#FFB800]" aria-hidden="true">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
@@ -444,6 +490,7 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
               )}
             </div>
             <button
+              type="button"
               onClick={handleAddToCart}
               aria-label={`Add ${product.name} to cart`}
               className="w-8 h-8 rounded-full bg-[#2B7A4B]/10 text-[#2B7A4B] flex items-center justify-center hover:bg-[#2B7A4B] hover:text-white transition-all"
@@ -460,14 +507,20 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
   return (
     <div className="relative group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col h-full">
       <button
-        aria-label={`Add ${product.name} to wishlist`}
-        className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors"
+        type="button"
+        onClick={handleToggleWishlist}
+        aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+        aria-pressed={inWishlist}
+        className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
       >
-        <Heart className="w-5 h-5" />
+        <Heart
+          className={`w-5 h-5 transition-colors ${
+            inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'
+          }`}
+        />
       </button>
 
-      <Link href={`/products/${product.slug || product._id}`} className="block flex-1">
-        {/* Image */}
+      <Link href={`/products/${product.slug || productId}`} className="block flex-1">
         <div className="relative w-full aspect-square bg-[#F8F9F6] rounded-lg overflow-hidden mb-4">
           {discount && (
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -483,7 +536,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
             </div>
           )}
 
-          {/* ✅ FIX: optimized URL + realistic sizes for a 2-4 col grid */}
           <Image
             src={optimizedImageSrc}
             alt={product.name || 'Product'}
@@ -494,7 +546,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
             loading={priority ? 'eager' : 'lazy'}
           />
 
-          {/* Out of Stock */}
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="px-3 py-1 bg-white text-red-600 text-sm font-semibold rounded-full">
@@ -504,7 +555,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
           )}
         </div>
 
-        {/* Info */}
         <div className="space-y-1.5">
           <h3 className="text-[15px] font-bold text-gray-900 line-clamp-1">
             {product.name}
@@ -513,7 +563,7 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
             {product.desc || product.description || ''}
           </p>
           <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
-            <div className="flex text-[#FFB800]">
+            <div className="flex text-[#FFB800]" aria-hidden="true">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
@@ -526,7 +576,6 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
             <span>({product.numReviews || 0})</span>
           </div>
 
-          {/* Price — reserve height to prevent layout shift */}
           <div className="pt-1.5 min-h-[52px]">
             {loadingDiscount ? (
               <div className="h-6 w-24 bg-gray-200 rounded animate-pulse" />
@@ -564,9 +613,9 @@ export default function ProductCard({ product, viewMode = 'grid', priority = fal
         </div>
       </Link>
 
-      {/* Add to Cart */}
       <div className="flex items-center justify-between pt-3 mt-auto">
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={product.stock === 0}
           aria-label={`Add ${product.name} to cart`}

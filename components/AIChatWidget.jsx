@@ -32,18 +32,6 @@ const N8N_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
 const API_BASE_URL = '/api';
 
 // ==========================================
-// ✅ FALLBACK PRODUCTS
-// ==========================================
-const FALLBACK_PRODUCTS = [
-  { id: 'p1', name: 'Money Plant', desc: 'Indoor Low Maintenance Plant', price: 1999, image: '/products/money-plant.jpg', category: 'Indoor Plants', stock: 50 },
-  { id: 'p2', name: 'Snake Plant', desc: 'Air Purifying Plant', price: 2499, image: '/products/snake-plant.jpg', category: 'Indoor Plants', stock: 40 },
-  { id: 'p3', name: 'Peace Lily', desc: 'Flowering Indoor Plant', price: 2999, image: '/products/peace-lily.jpg', category: 'Indoor Plants', stock: 35 },
-  { id: 'p5', name: 'Aloe Vera', desc: 'Medicinal Plant', price: 1499, image: '/products/aloe-vera.jpg', category: 'Succulents', stock: 60 },
-  { id: 'p7', name: 'Pothos Golden', desc: 'Devils Ivy', price: 1899, image: '/products/pothos.jpg', category: 'Indoor Plants', stock: 55 },
-  { id: 'p10', name: 'Fertilizer Organic', desc: 'Plant Food 500ml', price: 999, image: '/products/fertilizer.jpg', category: 'Accessories', stock: 100 },
-];
-
-// ==========================================
 // ✅ AGENTS — each with its own quick replies
 // ==========================================
 const agents = [
@@ -73,8 +61,6 @@ const agents = [
     isDefault: false,
     quickReplies: [
       'Show best selling plants',
-      'Add Money Plant to cart',
-      'Add Snake Plant to cart',
       'Show my cart',
       'Clear cart',
       'Place my order',
@@ -116,7 +102,6 @@ const agents = [
 
 // ==========================================
 // ✅ Helper: open chat with a specific agent
-// Call from anywhere in the app
 // ==========================================
 export function openChatWithAgent(agentId) {
   if (typeof window === 'undefined') return;
@@ -140,8 +125,12 @@ export default function AIChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchAgent, setSearchAgent] = useState('');
   const [showQuickReplies, setShowQuickReplies] = useState(true);
-  const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+
+  // ✅ Products — start EMPTY, no fallback
+  const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
   const [unreadCount, setUnreadCount] = useState(1);
 
   const messagesEndRef = useRef(null);
@@ -251,9 +240,11 @@ export default function AIChatWidget() {
   }, []);
 
   // ==========================================
-  // FETCH PRODUCTS
+  // FETCH REAL PRODUCTS (no fallback)
   // ==========================================
   const fetchProducts = async () => {
+    if (isLoadingProducts || productsLoaded) return;
+
     try {
       setIsLoadingProducts(true);
       const endpoints = [
@@ -273,23 +264,28 @@ export default function AIChatWidget() {
             const productsData = data.products || data.data || data;
             if (Array.isArray(productsData) && productsData.length > 0) {
               setProducts(productsData);
+              setProductsLoaded(true);
               return;
             }
           }
         } catch {
-          // silent
+          // try next endpoint
         }
       }
-      setProducts(FALLBACK_PRODUCTS);
+
+      // ✅ No products from any endpoint — leave empty
+      setProducts([]);
+      setProductsLoaded(true);
     } catch {
-      setProducts(FALLBACK_PRODUCTS);
+      setProducts([]);
+      setProductsLoaded(true);
     } finally {
       setIsLoadingProducts(false);
     }
   };
 
   useEffect(() => {
-    if (isOpen && products.length === 0 && !isLoadingProducts) {
+    if (isOpen && !productsLoaded && !isLoadingProducts) {
       fetchProducts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -479,12 +475,20 @@ export default function AIChatWidget() {
     }
 
     if (command.type === 'ADD_TO_CART') {
+      // ✅ If products not loaded yet, fetch them first
+      if (!productsLoaded) {
+        await fetchProducts();
+      }
+
       const product = findProductToAdd(lower);
       if (product) {
         addToCart(product, 1);
         window.dispatchEvent(new Event('cartUpdated'));
         window.dispatchEvent(new CustomEvent('botAddToCart', { detail: { product, quantity: 1, message: `✅ Added ${product.name} to cart!` } }));
         return { text: `✅ Added ${product.name} to cart!`, type: 'ADD_SUCCESS', product };
+      }
+      if (products.length === 0) {
+        return { text: "I don't have any products loaded right now. Please browse our shop to add items.", type: 'TEXT' };
       }
       return { text: "I couldn't find that product. Here are our available products:", type: 'PRODUCT_LIST', products: products.slice(0, 5) };
     }
@@ -527,7 +531,14 @@ export default function AIChatWidget() {
     }
 
     if (command.type === 'SEARCH_PRODUCTS') {
-      if (products.length === 0) return { text: '📦 Loading products...', type: 'TEXT' };
+      // ✅ If products not loaded yet, fetch them first
+      if (!productsLoaded) {
+        await fetchProducts();
+      }
+
+      if (products.length === 0) {
+        return { text: "I don't have any products to show right now. Please visit our shop to browse all items.", type: 'TEXT' };
+      }
       return { text: '🌿 Available Plants:', type: 'PRODUCT_LIST', products: products.slice(0, 6) };
     }
 

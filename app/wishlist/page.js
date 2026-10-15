@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -10,10 +9,14 @@ import {
   Star, Loader2, Share2, Check, ChevronRight,
 } from 'lucide-react';
 import { addToCart } from '@/app/utils/cart';
+import {
+  getWishlistIds,
+  removeFromWishlist,
+  isInWishlist,
+} from '@/app/utils/wishlist';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// ✅ Cloudinary transform for wishlist card images
 const CARD_TRANSFORM = 'w_400,h_400,c_fill,g_auto,q_auto:good,f_auto';
 
 const optimizeImage = (url) => {
@@ -23,62 +26,7 @@ const optimizeImage = (url) => {
   return url.replace('/upload/', `/upload/${CARD_TRANSFORM}/`);
 };
 
-// ============================================================
-// WISHLIST STORAGE HELPERS
-// We store an array of product IDs (not full objects) so that
-// product data always comes fresh from the API. This way prices,
-// stock, and images stay accurate.
-// ============================================================
-const WISHLIST_KEY = 'greenscape_wishlist';
-
-function getWishlistIds() {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(WISHLIST_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function setWishlistIds(ids) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(WISHLIST_KEY, JSON.stringify(ids));
-    window.dispatchEvent(new Event('wishlistUpdated'));
-  } catch {}
-}
-
-// ============================================================
-// EXPORTED HELPERS — used by other components
-// ============================================================
-export function addToWishlist(productId) {
-  const ids = getWishlistIds();
-  if (ids.includes(productId)) return false;
-  setWishlistIds([...ids, productId]);
-  return true;
-}
-
-export function removeFromWishlist(productId) {
-  const ids = getWishlistIds();
-  setWishlistIds(ids.filter((id) => id !== productId));
-}
-
-export function isInWishlist(productId) {
-  return getWishlistIds().includes(productId);
-}
-
-export function getWishlistCount() {
-  return getWishlistIds().length;
-}
-
-// ============================================================
-// PAGE COMPONENT
-// ============================================================
 export default function WishlistPage() {
-  const router = useRouter();
-
   const [wishlistIds, setWishlistIds] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,18 +36,18 @@ export default function WishlistPage() {
   const [addedItems, setAddedItems] = useState({});
 
   // ============================================================
-  // INITIAL LOAD — read IDs from localStorage, then fetch products
+  // LOAD IDS + PRODUCTS
   // ============================================================
   useEffect(() => {
-    const ids = getWishlistIds();
-    setWishlistIds(ids);
+    const load = async () => {
+      const ids = getWishlistIds();
+      setWishlistIds(ids);
 
-    if (ids.length === 0) {
-      setLoading(false);
-      return;
-    }
+      if (ids.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-    const fetchProducts = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/public/products`);
         if (!res.ok) throw new Error('Failed to load products');
@@ -107,12 +55,11 @@ export default function WishlistPage() {
         const data = await res.json();
         const allProducts = data.products || data.data || [];
 
-        // Filter to only the IDs in wishlist
-        const wishlistProducts = allProducts.filter((p) =>
-          ids.includes(p._id || p.id)
+        const filtered = allProducts.filter((p) =>
+          ids.includes(String(p._id || p.id))
         );
 
-        setProducts(wishlistProducts);
+        setProducts(filtered);
       } catch (err) {
         console.error('Wishlist fetch error:', err);
         setError('Failed to load your wishlist. Please try again.');
@@ -121,21 +68,34 @@ export default function WishlistPage() {
       }
     };
 
-    fetchProducts();
+    load();
+
+    // Listen for wishlist changes from other tabs/components
+    const handleUpdate = () => {
+      const ids = getWishlistIds();
+      setWishlistIds(ids);
+      setProducts((prev) =>
+        prev.filter((p) => ids.includes(String(p._id || p.id)))
+      );
+    };
+    window.addEventListener('wishlistUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleUpdate);
+    };
   }, []);
 
   // ============================================================
-  // REMOVE ITEM
+  // HANDLERS
   // ============================================================
   const handleRemove = (productId) => {
     removeFromWishlist(productId);
-    setWishlistIds((prev) => prev.filter((id) => id !== productId));
-    setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
+    setWishlistIds((prev) => prev.filter((id) => id !== String(productId)));
+    setProducts((prev) =>
+      prev.filter((p) => String(p._id || p.id) !== String(productId))
+    );
   };
 
-  // ============================================================
-  // ADD SINGLE ITEM TO CART
-  // ============================================================
   const handleAddToCart = (product) => {
     const productId = product._id || product.id;
 
@@ -153,22 +113,18 @@ export default function WishlistPage() {
     addToCart(productToAdd, 1);
     window.dispatchEvent(new Event('cartUpdated'));
 
-    // Visual feedback
     setAddedItems((prev) => ({ ...prev, [productId]: true }));
     setTimeout(() => {
       setAddedItems((prev) => ({ ...prev, [productId]: false }));
     }, 1500);
   };
 
-  // ============================================================
-  // ADD ALL TO CART
-  // ============================================================
   const handleAddAllToCart = () => {
     if (products.length === 0) return;
     setAddingAll(true);
 
     products.forEach((product) => {
-      if (product.stock === 0) return; // skip out-of-stock
+      if (product.stock === 0) return;
       const productToAdd = {
         id: product._id || product.id,
         name: product.name,
@@ -183,23 +139,15 @@ export default function WishlistPage() {
     });
 
     window.dispatchEvent(new Event('cartUpdated'));
-
-    setTimeout(() => {
-      setAddingAll(false);
-    }, 800);
+    setTimeout(() => setAddingAll(false), 800);
   };
 
-  // ============================================================
-  // SHARE WISHLIST (copy link)
-  // ============================================================
   const handleShare = async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
-
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
       } else {
-        // Fallback for older browsers
         const ta = document.createElement('textarea');
         ta.value = url;
         ta.style.position = 'fixed';
@@ -209,14 +157,13 @@ export default function WishlistPage() {
         document.execCommand('copy');
         document.body.removeChild(ta);
       }
-
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
   };
 
   // ============================================================
-  // COMPUTED VALUES
+  // COMPUTED
   // ============================================================
   const inStockCount = useMemo(
     () => products.filter((p) => p.stock > 0).length,
@@ -229,7 +176,7 @@ export default function WishlistPage() {
   );
 
   // ============================================================
-  // LOADING STATE
+  // LOADING
   // ============================================================
   if (loading) {
     return (
@@ -245,18 +192,12 @@ export default function WishlistPage() {
   // ============================================================
   // EMPTY STATE
   // ============================================================
-  if (wishlistIds.length === 0 || products.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="w-full min-h-screen bg-[#F8F9F6] pb-20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
-          {/* Breadcrumb */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-2 text-sm text-gray-500 mb-6"
-          >
-            <Link href="/" className="hover:text-[#2B7A4B]">
-              Home
-            </Link>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+            <Link href="/" className="hover:text-[#2B7A4B]">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
             <span className="text-[#2B7A4B] font-medium">Wishlist</span>
           </nav>
@@ -286,24 +227,17 @@ export default function WishlistPage() {
   }
 
   // ============================================================
-  // MAIN WISHLIST
+  // MAIN
   // ============================================================
   return (
     <div className="w-full min-h-screen bg-[#F8F9F6] pb-20">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6">
-        {/* ===== BREADCRUMB ===== */}
-        <nav
-          aria-label="Breadcrumb"
-          className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6"
-        >
-          <Link href="/" className="hover:text-[#2B7A4B]">
-            Home
-          </Link>
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
+          <Link href="/" className="hover:text-[#2B7A4B]">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
           <span className="text-[#2B7A4B] font-medium">Wishlist</span>
         </nav>
 
-        {/* ===== BACK BUTTON ===== */}
         <Link
           href="/products"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#2B7A4B] transition-colors mb-6"
@@ -312,7 +246,7 @@ export default function WishlistPage() {
           Continue Shopping
         </Link>
 
-        {/* ===== HEADER ===== */}
+        {/* Header */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -326,9 +260,7 @@ export default function WishlistPage() {
                 <p className="text-sm text-gray-500">
                   {products.length} item{products.length !== 1 ? 's' : ''} saved
                   {inStockCount < products.length && (
-                    <span className="text-amber-600">
-                      {' '}· {products.length - inStockCount} out of stock
-                    </span>
+                    <span className="text-amber-600"> · {products.length - inStockCount} out of stock</span>
                   )}
                 </p>
               </div>
@@ -343,13 +275,11 @@ export default function WishlistPage() {
               >
                 {copied ? (
                   <>
-                    <Check className="w-4 h-4 text-green-600" />
-                    Copied!
+                    <Check className="w-4 h-4 text-green-600" /> Copied!
                   </>
                 ) : (
                   <>
-                    <Share2 className="w-4 h-4" />
-                    Share
+                    <Share2 className="w-4 h-4" /> Share
                   </>
                 )}
               </button>
@@ -362,41 +292,28 @@ export default function WishlistPage() {
               >
                 {addingAll ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Adding...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Adding...
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-4 h-4" />
-                    Add All to Cart ({inStockCount})
+                    <ShoppingCart className="w-4 h-4" /> Add All to Cart ({inStockCount})
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          {/* Summary bar */}
           <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                Total Items
-              </p>
-              <p className="text-lg font-bold text-gray-900">
-                {products.length}
-              </p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Items</p>
+              <p className="text-lg font-bold text-gray-900">{products.length}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                Available
-              </p>
-              <p className="text-lg font-bold text-[#2B7A4B]">
-                {inStockCount}
-              </p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Available</p>
+              <p className="text-lg font-bold text-[#2B7A4B]">{inStockCount}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                Total Value
-              </p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Value</p>
               <p className="text-lg font-bold text-gray-900">
                 Rs. {totalValue.toLocaleString()}
               </p>
@@ -404,25 +321,21 @@ export default function WishlistPage() {
           </div>
         </div>
 
-        {/* ===== ERROR ===== */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
             {error}
           </div>
         )}
 
-        {/* ===== PRODUCTS GRID ===== */}
+        {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {products.map((product) => {
             const productId = product._id || product.id;
             const isAdded = addedItems[productId];
             const isOutOfStock = product.stock === 0;
-            const hasDiscount =
-              product.oldPrice && product.oldPrice > product.price;
+            const hasDiscount = product.oldPrice && product.oldPrice > product.price;
             const discountPercent = hasDiscount
-              ? Math.round(
-                  ((product.oldPrice - product.price) / product.oldPrice) * 100
-                )
+              ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
               : 0;
 
             return (
@@ -430,18 +343,10 @@ export default function WishlistPage() {
                 key={productId}
                 className="group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
               >
-                {/* ===== IMAGE ===== */}
                 <div className="relative w-full aspect-square bg-[#F8F9F6] overflow-hidden">
-                  <Link
-                    href={`/products/${product.slug || productId}`}
-                    aria-label={`View ${product.name}`}
-                  >
+                  <Link href={`/products/${product.slug || productId}`} aria-label={`View ${product.name}`}>
                     <Image
-                      src={optimizeImage(
-                        product.image ||
-                          product.images?.[0] ||
-                          '/placeholder-product.jpg'
-                      )}
+                      src={optimizeImage(product.image || product.images?.[0] || '/placeholder-product.jpg')}
                       alt={product.name || 'Product'}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -449,24 +354,21 @@ export default function WishlistPage() {
                     />
                   </Link>
 
-                  {/* Discount badge */}
                   {hasDiscount && (
                     <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
                       -{discountPercent}%
                     </div>
                   )}
 
-                  {/* Remove button */}
                   <button
                     type="button"
                     onClick={() => handleRemove(productId)}
                     aria-label={`Remove ${product.name} from wishlist`}
-                    className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-white transition-colors"
+                    className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-red-500 hover:bg-white transition-colors"
                   >
-                    <Heart className="w-4 h-4 fill-current text-red-500" />
+                    <Heart className="w-4 h-4 fill-current" />
                   </button>
 
-                  {/* Out of stock overlay */}
                   {isOutOfStock && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
                       <span className="px-3 py-1 bg-white text-red-600 text-xs font-semibold rounded-full">
@@ -476,7 +378,6 @@ export default function WishlistPage() {
                   )}
                 </div>
 
-                {/* ===== INFO ===== */}
                 <div className="p-3 md:p-4 flex-1 flex flex-col">
                   {product.category && (
                     <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">
@@ -484,35 +385,26 @@ export default function WishlistPage() {
                     </p>
                   )}
 
-                  <Link
-                    href={`/products/${product.slug || productId}`}
-                    className="block"
-                  >
+                  <Link href={`/products/${product.slug || productId}`} className="block">
                     <h3 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-[#2B7A4B] transition-colors min-h-[2.5em]">
                       {product.name}
                     </h3>
                   </Link>
 
-                  {/* Rating */}
                   <div className="flex items-center gap-1 mb-2">
                     <div className="flex text-[#FFB800]" aria-hidden="true">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
                           className={`w-3 h-3 ${
-                            i < Math.floor(product.rating || 0)
-                              ? 'fill-current'
-                              : 'text-gray-300'
+                            i < Math.floor(product.rating || 0) ? 'fill-current' : 'text-gray-300'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-[10px] text-gray-400">
-                      ({product.numReviews || 0})
-                    </span>
+                    <span className="text-[10px] text-gray-400">({product.numReviews || 0})</span>
                   </div>
 
-                  {/* Price */}
                   <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
                       <span className="text-lg font-bold text-[#2B7A4B]">
@@ -525,7 +417,6 @@ export default function WishlistPage() {
                       )}
                     </div>
 
-                    {/* Add to cart button */}
                     <button
                       type="button"
                       onClick={() => handleAddToCart(product)}
@@ -541,18 +432,15 @@ export default function WishlistPage() {
                     >
                       {isAdded ? (
                         <>
-                          <Check className="w-3.5 h-3.5" />
-                          Added!
+                          <Check className="w-3.5 h-3.5" /> Added!
                         </>
                       ) : isOutOfStock ? (
                         <>
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Out of Stock
+                          <ShoppingCart className="w-3.5 h-3.5" /> Out of Stock
                         </>
                       ) : (
                         <>
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Add to Cart
+                          <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
                         </>
                       )}
                     </button>
@@ -563,11 +451,8 @@ export default function WishlistPage() {
           })}
         </div>
 
-        {/* ===== BOTTOM CTA ===== */}
         <div className="mt-12 bg-gradient-to-r from-[#2B7A4B] to-emerald-600 rounded-2xl p-8 text-white text-center">
-          <h3 className="text-xl md:text-2xl font-bold mb-2">
-            Looking for more green?
-          </h3>
+          <h3 className="text-xl md:text-2xl font-bold mb-2">Looking for more green?</h3>
           <p className="text-white/80 mb-6 max-w-lg mx-auto text-sm">
             Explore our full collection of plants, tools, and garden essentials.
           </p>

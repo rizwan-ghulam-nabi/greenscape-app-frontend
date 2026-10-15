@@ -649,9 +649,17 @@ export default function AccountDashboard() {
                 </div>
               </div>
 
-              <button className="w-full mt-4 py-2.5 bg-white text-[#1A3C34] rounded-lg font-semibold text-[13px] hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+              {/* <button className="w-full mt-4 py-2.5 bg-white text-[#1A3C34] rounded-lg font-semibold text-[13px] hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
                 View Membership Benefits <span className="text-base">→</span>
-              </button>
+              </button> */}
+
+          <Link
+  href="/account/membership"
+  className="w-full mt-4 py-2.5 bg-white text-[#1A3C34] rounded-lg font-semibold text-[13px] hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+>
+  View Membership Benefits <span className="text-base">→</span>
+</Link>
+
             </div>
 
             {/* Account Shortcuts */}

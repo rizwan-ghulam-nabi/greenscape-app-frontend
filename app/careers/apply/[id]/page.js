@@ -72,7 +72,7 @@ export default function ApplyPage() {
     }
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_RESUME_PRESET;
 
     if (!cloudName || !uploadPreset) {
       setError('Cloudinary not configured.');

@@ -129,37 +129,41 @@ export default function ContactUsPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setError('');
+  setSuccess('');
 
-    if (!form.name || !form.email || !form.subject || !form.message) {
-      setError('Please fill in all required fields.');
-      return;
+  if (!form.name || !form.email || !form.subject || !form.message) {
+    setError('Please fill in all required fields.');
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+
+    const res = await fetch(`${API_BASE_URL}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(form),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to send message.');
     }
 
-    try {
-      setSubmitting(true);
+    setSuccess("Message sent! We'll get back to you within 24 hours.");
+    setForm({ name: '', email: '', subject: '', message: '' });
+  } catch (err) {
+    setError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
-      // 👉 Replace with your real API endpoint
-      // const res = await fetch(`${API_BASE_URL}/api/contact`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(form),
-      // });
-      // const data = await res.json();
-      // if (!res.ok || !data.success) throw new Error(data.error);
 
-      await new Promise((r) => setTimeout(r, 800));
-
-      setSuccess("Message sent! We'll get back to you within 24 hours.");
-      setForm({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">

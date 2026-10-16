@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { POSITIONS } from '../lib/careers/jobs';
 
-
 export const metadata = {
   title: 'Careers | GreenScape',
   description:
@@ -36,145 +35,45 @@ const VALUES = [
   {
     icon: Sprout,
     title: 'Plant-First Thinking',
-    desc: 'Every decision starts with what\'s best for the plants we ship and the customers who love them.',
+    desc: "Every decision starts with what's best for the plants we ship and the customers who love them.",
   },
   {
     icon: Users,
     title: 'Small Team, Real Impact',
-    desc: 'We\'re lean on purpose. Every person owns their work and sees their ideas ship within weeks.',
+    desc: "We're lean on purpose. Every person owns their work and sees their ideas ship within weeks.",
   },
   {
     icon: GraduationCap,
     title: 'Learn Constantly',
-    desc: 'Whether you\'re a horticulturist or engineer, we invest in your growth — courses, conferences, and mentorship.',
+    desc: "Whether you're a horticulturist or engineer, we invest in your growth — courses, conferences, and mentorship.",
   },
   {
     icon: Heart,
     title: 'Care Beyond Work',
-    desc: 'Healthy work-life balance isn\'t a perk here — it\'s how we operate. We ship better when we rest well.',
+    desc: "Healthy work-life balance isn't a perk here — it's how we operate. We ship better when we rest well.",
   },
 ];
 
 // ==========================================
-// PERKS & BENEFITS
+// PERKS
 // ==========================================
 const PERKS = [
-  {
-    icon: Home,
-    title: 'Remote-Friendly',
-    desc: 'Work from home or our Faisalabad office — your choice.',
-  },
-  {
-    icon: Clock,
-    title: 'Flexible Hours',
-    desc: 'Core hours 11 AM–4 PM. Rest of your schedule is yours.',
-  },
-  {
-    icon: Stethoscope,
-    title: 'Health Coverage',
-    desc: 'Medical insurance for you and your immediate family.',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Learning Budget',
-    desc: 'Rs. 50,000/year for courses, books, and conferences.',
-  },
-  {
-    icon: Leaf,
-    title: 'Free Plants',
-    desc: 'Monthly plant credits to fill your home with green.',
-  },
-  {
-    icon: Coffee,
-    title: 'Quarterly Retreats',
-    desc: 'Team offsites twice a year — work and play combined.',
-  },
+  { icon: Home, title: 'Remote-Friendly', desc: 'Work from home or our Faisalabad office — your choice.' },
+  { icon: Clock, title: 'Flexible Hours', desc: 'Core hours 11 AM–4 PM. Rest of your schedule is yours.' },
+  { icon: Stethoscope, title: 'Health Coverage', desc: 'Medical insurance for you and your immediate family.' },
+  { icon: GraduationCap, title: 'Learning Budget', desc: 'Rs. 50,000/year for courses, books, and conferences.' },
+  { icon: Leaf, title: 'Free Plants', desc: 'Monthly plant credits to fill your home with green.' },
+  { icon: Coffee, title: 'Quarterly Retreats', desc: 'Team offsites twice a year — work and play combined.' },
 ];
-
-// ==========================================
-// OPEN POSITIONS (edit as needed)
-// ==========================================
-// const POSITIONS = [
-//   {
-//     id: 1,
-//     title: 'Senior Horticulturist',
-//     department: 'Plant Operations',
-//     location: 'Faisalabad, PK',
-//     type: 'Full-time',
-//     experience: '3+ years',
-//     desc: 'Lead plant selection, care protocols, and quality control across our catalog.',
-//   },
-//   {
-//     id: 2,
-//     title: 'Full-Stack Developer (MERN)',
-//     department: 'Engineering',
-//     location: 'Remote',
-//     type: 'Full-time',
-//     experience: '2+ years',
-//     desc: 'Build and scale our customer-facing storefront and admin tools.',
-//   },
-//   {
-//     id: 3,
-//     title: 'Customer Experience Specialist',
-//     department: 'Support',
-//     location: 'Remote',
-//     type: 'Full-time',
-//     experience: '1+ year',
-//     desc: 'Be the friendly voice our customers hear when they need help with orders or plant care.',
-//   },
-//   {
-//     id: 4,
-//     title: 'Social Media & Content Creator',
-//     department: 'Marketing',
-//     location: 'Hybrid (Faisalabad)',
-//     type: 'Full-time',
-//     experience: '1+ year',
-//     desc: 'Create short-form video, photography, and written content to grow our community.',
-//   },
-//   {
-//     id: 5,
-//     title: 'Logistics Coordinator',
-//     department: 'Operations',
-//     location: 'Faisalabad, PK',
-//     type: 'Full-time',
-//     experience: '2+ years',
-//     desc: 'Coordinate courier partners and ensure plants arrive healthy, fast, and on time.',
-//   },
-//   {
-//     id: 6,
-//     title: 'Photography Intern',
-//     department: 'Marketing',
-//     location: 'Hybrid (Faisalabad)',
-//     type: 'Internship · 3 months',
-//     experience: 'Entry-level',
-//     desc: 'Shoot beautiful product and lifestyle photos for the store and social media.',
-//   },
-// ];
 
 // ==========================================
 // HIRING PROCESS
 // ==========================================
 const PROCESS = [
-  {
-    icon: Send,
-    title: 'Apply',
-    desc: 'Send your resume and a short note about why you\'d love to work with us.',
-  },
-  {
-    icon: Star,
-    title: 'Intro Call',
-    desc: 'A 30-minute chat to understand each other. No trick questions.',
-  },
-  {
-    icon: Users,
-    title: 'Team Interview',
-    desc: 'Meet 2–3 team members. We value practical skills over trivia.',
-  },
-  {
-    icon: Briefcase,
-    title: 'Offer',
-    desc: 'We make a decision within 5 working days of the final interview.',
-  },
+  { icon: Send, title: 'Apply', desc: "Send your resume and a short note about why you'd love to work with us." },
+  { icon: Star, title: 'Intro Call', desc: 'A 30-minute chat to understand each other. No trick questions.' },
+  { icon: Users, title: 'Team Interview', desc: 'Meet 2–3 team members. We value practical skills over trivia.' },
+  { icon: Briefcase, title: 'Offer', desc: 'We make a decision within 5 working days of the final interview.' },
 ];
 
 export default function CareersPage() {
@@ -213,7 +112,7 @@ export default function CareersPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { value: '25+', label: 'Team Members' },
-              { value: '6', label: 'Open Roles' },
+              { value: String(POSITIONS.length), label: 'Open Roles' },
               { value: '3', label: 'Departments' },
               { value: '100%', label: 'Remote-Friendly' },
             ].map((stat) => (
@@ -281,12 +180,10 @@ export default function CareersPage() {
               className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#2B7A4B]/30 transition-all overflow-hidden"
             >
               <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                {/* Icon */}
                 <div className="w-14 h-14 bg-[#2B7A4B]/10 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <Briefcase className="w-7 h-7 text-[#2B7A4B]" />
                 </div>
 
-                {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-[#2B7A4B] transition-colors">
@@ -315,16 +212,14 @@ export default function CareersPage() {
                   </div>
                 </div>
 
-                {/* CTA */}
-                <a
-                  href={`mailto:careers@greenscape.com?subject=Application: ${encodeURIComponent(
-                    pos.title
-                  )}`}
+                {/* ✅ FIX: Apply Now routes to /careers/apply/[id] */}
+                <Link
+                  href={`/careers/apply/${pos.id}`}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#2B7A4B] text-white rounded-xl font-semibold text-sm hover:bg-[#23663e] transition-colors flex-shrink-0 shadow-sm"
                 >
                   Apply Now
                   <ArrowRight className="w-4 h-4" />
-                </a>
+                </Link>
               </div>
             </div>
           ))}
@@ -388,7 +283,6 @@ export default function CareersPage() {
                 key={step.title}
                 className="relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm"
               >
-                {/* Step number */}
                 <div className="absolute -top-3 left-6 bg-[#2B7A4B] text-white text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md">
                   {i + 1}
                 </div>
@@ -407,7 +301,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      {/* ===== NO OPENING CTA ===== */}
+      {/* ===== OPEN APPLICATION CTA ===== */}
       <section className="max-w-[1200px] mx-auto px-4 mt-20">
         <div className="relative bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-12 overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -447,7 +341,6 @@ export default function CareersPage() {
               </a>
             </div>
 
-            {/* Right visual */}
             <div className="bg-gradient-to-br from-[#2B7A4B] to-emerald-700 rounded-2xl p-8 text-white text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="relative">

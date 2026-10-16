@@ -20,6 +20,8 @@ import {
   Send,
   Star,
 } from 'lucide-react';
+import { POSITIONS } from '../lib/careers/jobs';
+
 
 export const metadata = {
   title: 'Careers | GreenScape',

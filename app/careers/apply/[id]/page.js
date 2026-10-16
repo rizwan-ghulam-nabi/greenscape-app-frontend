@@ -11,7 +11,14 @@ import {
 } from 'lucide-react';
 import { getPositionById } from '@/app/lib/careers/jobs';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// ✅ FIX: Strip any /api or /api/admin suffix from the env var
+// so we always build clean /api/... paths
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE_URL = RAW_API_URL
+  .replace(/\/api\/admin\/?$/, '')
+  .replace(/\/api\/?$/, '')
+  .replace(/\/$/, '');
+
 const MAX_RESUME_MB = 5;
 
 export default function ApplyPage() {
@@ -30,8 +37,8 @@ export default function ApplyPage() {
     portfolioUrl: '',
     linkedinUrl: '',
     coverLetter: '',
-    resumeUrl: '',    // Cloudinary URL
-    resumeName: '',   // original filename
+    resumeUrl: '',
+    resumeName: '',
   });
 
   const [resumePreview, setResumePreview] = useState(null);
@@ -53,19 +60,24 @@ export default function ApplyPage() {
     }
   }, [id]);
 
-  // Cloudinary upload
+  // ==========================================
+  // ✅ Cloudinary resume upload
+  // Uses /auto/upload endpoint to accept PDF/DOC
+  // ==========================================
   const handleResumeUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate size
     if (file.size > MAX_RESUME_MB * 1024 * 1024) {
       setError(`Resume too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max ${MAX_RESUME_MB} MB.`);
       return;
     }
 
-    // Validate type
-    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
     if (!allowed.includes(file.type)) {
       setError('Only PDF, DOC, or DOCX files are accepted.');
       return;
@@ -75,7 +87,7 @@ export default function ApplyPage() {
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_RESUME_PRESET;
 
     if (!cloudName || !uploadPreset) {
-      setError('Cloudinary not configured.');
+      setError('Resume upload is not configured. Please contact support.');
       return;
     }
 
@@ -85,18 +97,12 @@ export default function ApplyPage() {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', uploadPreset);
-    // fd.append('resource_type', 'raw'); // for PDFs/docs
 
     try {
-      // const res = await fetch(
-      //   `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
-      //   { method: 'POST', body: fd }
-      // );
-
-       const res = await fetch(
-  `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-  { method: 'POST', body: fd }
-);
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        { method: 'POST', body: fd }
+      );
 
       const data = await res.json();
 
@@ -108,9 +114,11 @@ export default function ApplyPage() {
         }));
         setResumePreview(file.name);
       } else {
-        setError('Upload failed. Please try again.');
+        console.error('Cloudinary upload response:', data);
+        setError(data.error?.message || 'Upload failed. Please try again.');
       }
     } catch (err) {
+      console.error('Cloudinary upload error:', err);
       setError('Upload failed. Please try again.');
     } finally {
       setUploadingResume(false);
@@ -131,7 +139,6 @@ export default function ApplyPage() {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (!formData.fullName || !formData.email || !formData.phone) {
       setError('Please fill in name, email, and phone.');
       return;
@@ -167,7 +174,6 @@ export default function ApplyPage() {
       }
 
       setSuccess(true);
-      // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -251,7 +257,6 @@ export default function ApplyPage() {
   return (
     <div className="min-h-screen bg-[#F8F9F6] py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Back link */}
         <Link
           href="/careers"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#2B7A4B] transition-colors mb-6"
@@ -286,7 +291,6 @@ export default function ApplyPage() {
           </div>
         </div>
 
-        {/* Two-column layout: form + requirements */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* FORM */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">

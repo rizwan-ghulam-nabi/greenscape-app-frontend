@@ -94,62 +94,62 @@ const PERKS = [
 // ==========================================
 // OPEN POSITIONS (edit as needed)
 // ==========================================
-const POSITIONS = [
-  {
-    id: 1,
-    title: 'Senior Horticulturist',
-    department: 'Plant Operations',
-    location: 'Faisalabad, PK',
-    type: 'Full-time',
-    experience: '3+ years',
-    desc: 'Lead plant selection, care protocols, and quality control across our catalog.',
-  },
-  {
-    id: 2,
-    title: 'Full-Stack Developer (MERN)',
-    department: 'Engineering',
-    location: 'Remote',
-    type: 'Full-time',
-    experience: '2+ years',
-    desc: 'Build and scale our customer-facing storefront and admin tools.',
-  },
-  {
-    id: 3,
-    title: 'Customer Experience Specialist',
-    department: 'Support',
-    location: 'Remote',
-    type: 'Full-time',
-    experience: '1+ year',
-    desc: 'Be the friendly voice our customers hear when they need help with orders or plant care.',
-  },
-  {
-    id: 4,
-    title: 'Social Media & Content Creator',
-    department: 'Marketing',
-    location: 'Hybrid (Faisalabad)',
-    type: 'Full-time',
-    experience: '1+ year',
-    desc: 'Create short-form video, photography, and written content to grow our community.',
-  },
-  {
-    id: 5,
-    title: 'Logistics Coordinator',
-    department: 'Operations',
-    location: 'Faisalabad, PK',
-    type: 'Full-time',
-    experience: '2+ years',
-    desc: 'Coordinate courier partners and ensure plants arrive healthy, fast, and on time.',
-  },
-  {
-    id: 6,
-    title: 'Photography Intern',
-    department: 'Marketing',
-    location: 'Hybrid (Faisalabad)',
-    type: 'Internship · 3 months',
-    experience: 'Entry-level',
-    desc: 'Shoot beautiful product and lifestyle photos for the store and social media.',
-  },
-];
+// const POSITIONS = [
+//   {
+//     id: 1,
+//     title: 'Senior Horticulturist',
+//     department: 'Plant Operations',
+//     location: 'Faisalabad, PK',
+//     type: 'Full-time',
+//     experience: '3+ years',
+//     desc: 'Lead plant selection, care protocols, and quality control across our catalog.',
+//   },
+//   {
+//     id: 2,
+//     title: 'Full-Stack Developer (MERN)',
+//     department: 'Engineering',
+//     location: 'Remote',
+//     type: 'Full-time',
+//     experience: '2+ years',
+//     desc: 'Build and scale our customer-facing storefront and admin tools.',
+//   },
+//   {
+//     id: 3,
+//     title: 'Customer Experience Specialist',
+//     department: 'Support',
+//     location: 'Remote',
+//     type: 'Full-time',
+//     experience: '1+ year',
+//     desc: 'Be the friendly voice our customers hear when they need help with orders or plant care.',
+//   },
+//   {
+//     id: 4,
+//     title: 'Social Media & Content Creator',
+//     department: 'Marketing',
+//     location: 'Hybrid (Faisalabad)',
+//     type: 'Full-time',
+//     experience: '1+ year',
+//     desc: 'Create short-form video, photography, and written content to grow our community.',
+//   },
+//   {
+//     id: 5,
+//     title: 'Logistics Coordinator',
+//     department: 'Operations',
+//     location: 'Faisalabad, PK',
+//     type: 'Full-time',
+//     experience: '2+ years',
+//     desc: 'Coordinate courier partners and ensure plants arrive healthy, fast, and on time.',
+//   },
+//   {
+//     id: 6,
+//     title: 'Photography Intern',
+//     department: 'Marketing',
+//     location: 'Hybrid (Faisalabad)',
+//     type: 'Internship · 3 months',
+//     experience: 'Entry-level',
+//     desc: 'Shoot beautiful product and lifestyle photos for the store and social media.',
+//   },
+// ];
 
 // ==========================================
 // HIRING PROCESS

@@ -59,7 +59,7 @@ const contactCards = [
     icon: Mail,
     iconBg: 'bg-blue-100 text-blue-600',
     title: 'Email Support',
-    lines: ['hello@greenscape.com', "We'll reply within 24 hours"],
+    lines: ['greenScape@gmail.com', "We'll reply within 24 hours"],
   },
   {
     icon: MapPin,

@@ -85,13 +85,19 @@ export default function ApplyPage() {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', uploadPreset);
-    fd.append('resource_type', 'raw'); // for PDFs/docs
+    // fd.append('resource_type', 'raw'); // for PDFs/docs
 
     try {
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
-        { method: 'POST', body: fd }
-      );
+      // const res = await fetch(
+      //   `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+      //   { method: 'POST', body: fd }
+      // );
+
+       const res = await fetch(
+  `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+  { method: 'POST', body: fd }
+);
+
       const data = await res.json();
 
       if (data.secure_url) {
